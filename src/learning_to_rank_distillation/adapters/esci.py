@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from hashlib import blake2b
 from pathlib import Path
 from typing import Any
 
@@ -195,6 +196,7 @@ def _features_from_row(row: dict[str, Any]) -> dict[str, Any]:
         "source": _clean_value(row.get("source")),
         "product_brand": _clean_value(row.get("product_brand")),
         "product_color": _clean_value(row.get("product_color")),
+        "product_id_hash_bucket": _product_id_hash_bucket(row.get("product_id")),
         "query_char_count": len(query),
         "query_token_count": len(query_tokens),
         "title_char_count": len(title),
@@ -244,3 +246,9 @@ def _overlap(left: set[str], right: set[str]) -> float:
     if not left or not right:
         return 0.0
     return len(left & right) / len(left | right)
+
+
+def _product_id_hash_bucket(value: Any, *, buckets: int = 1024) -> int:
+    text = str(value)
+    digest = blake2b(text.encode("utf-8"), digest_size=4).hexdigest()
+    return int(digest, 16) % buckets

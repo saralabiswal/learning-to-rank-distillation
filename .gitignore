@@ -25,6 +25,9 @@ data/rectour/*
 !data/rectour/.gitkeep
 data/esci/*
 !data/esci/.gitkeep
+!data/esci/SOURCE.md
+!data/esci/shopping_queries_dataset_examples.parquet
+!data/esci/shopping_queries_dataset_sources.csv
 data/movielens/*
 !data/movielens/.gitkeep
 data/synthetic/

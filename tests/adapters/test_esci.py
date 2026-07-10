@@ -53,6 +53,7 @@ def test_esci_adapter_loads_csv_examples_and_metadata(tmp_path: Path) -> None:
     assert examples[0].position is None
     assert examples[0].features["product_locale"] == "us"
     assert examples[0].features["source"] == "search"
+    assert isinstance(examples[0].features["product_id_hash_bucket"], int)
     assert examples[0].features["query_title_token_overlap"] > 0
     assert examples[0].features["has_product_brand"] is True
     assert examples[1].features["product_brand"] is None

@@ -120,6 +120,11 @@ Amazon ESCI is the primary public-data path. Place the official shopping query f
 - `shopping_queries_dataset_products.csv` or `.parquet`
 - `shopping_queries_dataset_sources.csv` or `.parquet` (optional)
 
+This repo commits the official examples parquet and sources CSV downloaded from Amazon Science on
+July 10, 2026. The products parquet is not committed because it is about 1.03 GB and requires Git
+LFS. The ESCI adapter still runs without it by using query fields, sources, locale, and a stable
+product-id hash bucket; product metadata is merged automatically when the products file is present.
+
 The ESCI adapter maps `E/S/C/I` judgments to graded relevance `3/2/1/0`, merges product metadata
 when available, derives conservative text-overlap features, and exposes the result through
 `RankingExample`.

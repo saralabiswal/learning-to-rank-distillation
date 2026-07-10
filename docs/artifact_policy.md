@@ -15,6 +15,9 @@ does not commit raw datasets, trained model binaries, local registries, or cache
 - `artifacts/fairness_pareto_frontier.json`
 - `artifacts/fairness_pareto_frontier.png`
 - `data/esci/.gitkeep`
+- `data/esci/SOURCE.md`
+- `data/esci/shopping_queries_dataset_examples.parquet`
+- `data/esci/shopping_queries_dataset_sources.csv`
 - `data/rectour/.gitkeep`
 
 The benchmark artifacts are generated from the deterministic synthetic fallback unless a run clearly
@@ -22,7 +25,8 @@ states that it used real data.
 
 ## Ignored
 
-- Raw data under `data/esci/` and `data/rectour/`
+- Raw data under `data/esci/` and `data/rectour/`, except the committed ESCI examples parquet and
+  sources CSV documented in `data/esci/SOURCE.md`
 - Generated synthetic CSVs under `data/synthetic/`
 - Student serving bundles under `artifacts/bundles/`
 - Trained model files under `artifacts/models/`
