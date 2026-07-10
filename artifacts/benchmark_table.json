@@ -1,0 +1,42 @@
+[
+  {
+    "latency_p50_ms": 1.2334585044300184,
+    "latency_p99_ms": 1.5092772868229076,
+    "model": "teacher-lightgbm",
+    "model_size_bytes": 111655,
+    "ndcg_at_10": 0.523738080831719,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "latency_p50_ms": 1.1538334947545081,
+    "latency_p99_ms": 1.43933931394713,
+    "model": "student-no-kd-d16",
+    "model_size_bytes": 35712,
+    "ndcg_at_10": 0.551502623112898,
+    "ndcg_at_5": 0.4120541572008597
+  },
+  {
+    "latency_p50_ms": 1.152458498836495,
+    "latency_p99_ms": 1.391002711316105,
+    "model": "student-kd-d8",
+    "model_size_bytes": 33600,
+    "ndcg_at_10": 0.551502623112898,
+    "ndcg_at_5": 0.4120541572008597
+  },
+  {
+    "latency_p50_ms": 1.1550835042726249,
+    "latency_p99_ms": 1.330079507897608,
+    "model": "student-kd-d16",
+    "model_size_bytes": 35712,
+    "ndcg_at_10": 0.551502623112898,
+    "ndcg_at_5": 0.4120541572008597
+  },
+  {
+    "latency_p50_ms": 1.1593129893299192,
+    "latency_p99_ms": 1.4297450127196496,
+    "model": "student-kd-d32",
+    "model_size_bytes": 39936,
+    "ndcg_at_10": 0.551502623112898,
+    "ndcg_at_5": 0.4120541572008597
+  }
+]

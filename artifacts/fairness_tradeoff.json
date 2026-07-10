@@ -1,0 +1,32 @@
+[
+  {
+    "exposure_floor": 0.0,
+    "exposure_gini_at_5": 0.2532467532467532,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_floor": 0.1,
+    "exposure_gini_at_5": 0.2532467532467532,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_floor": 0.2,
+    "exposure_gini_at_5": 0.2532467532467532,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_floor": 0.3,
+    "exposure_gini_at_5": 0.2532467532467532,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_floor": 0.4,
+    "exposure_gini_at_5": 0.2532467532467532,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  }
+]
