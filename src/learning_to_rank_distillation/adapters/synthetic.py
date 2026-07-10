@@ -11,6 +11,7 @@ from __future__ import annotations
 import csv
 import math
 import random
+from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -51,6 +52,9 @@ RECTOUR_LIKE_FEATURE_COLUMNS: tuple[str, ...] = (
     "promotion_flag",
     "competitor_price_delta",
     "competitor_availability_rate",
+    "marketplace_supply_segment",
+    "is_cold_start_supply",
+    "exposure_skew_score",
     "price_rank",
     "star_rank",
     "location_score_rank",
@@ -78,6 +82,29 @@ _AMENITY_COLUMNS = (
 _SORT_TYPES = ("recommended", "price", "star_rating", "review_rating")
 _POINTS_OF_SALE = ("US", "CA", "GB", "DE", "FR", "CH")
 _COUNTRIES = ("US", "CA", "GB", "DE", "FR", "CH", "IN", "AU")
+
+
+@dataclass(frozen=True, slots=True)
+class SyntheticMarketplaceConfig:
+    """Controls for stress-testing marketplace ranking behavior."""
+
+    num_queries: int = 24
+    items_per_query: int = 8
+    seed: int = 13
+    num_destinations: int = 5
+    num_properties: int | None = None
+    supply_concentration: float = 0.0
+    cold_start_rate: float = 0.0
+    exposure_skew: float = 0.0
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("supply_concentration", self.supply_concentration),
+            ("cold_start_rate", self.cold_start_rate),
+            ("exposure_skew", self.exposure_skew),
+        ):
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be between 0 and 1")
 
 
 def make_synthetic_rectour_rows(
@@ -207,6 +234,30 @@ def make_synthetic_ranking_data(
     return [_row_to_ranking_example(row) for row in rows]
 
 
+def make_configurable_marketplace_rows(
+    config: SyntheticMarketplaceConfig,
+) -> list[dict[str, Any]]:
+    """Create synthetic rows with explicit marketplace stress-test controls."""
+
+    rows = make_synthetic_rectour_rows(
+        num_queries=config.num_queries,
+        items_per_query=config.items_per_query,
+        seed=config.seed,
+        num_destinations=config.num_destinations,
+        num_properties=config.num_properties,
+    )
+    _apply_marketplace_controls(rows, config)
+    return rows
+
+
+def make_configurable_marketplace_ranking_data(
+    config: SyntheticMarketplaceConfig,
+) -> list[RankingExample]:
+    """Create `RankingExample` rows from configurable marketplace controls."""
+
+    return [_row_to_ranking_example(row) for row in make_configurable_marketplace_rows(config)]
+
+
 def _make_query_rows(
     *,
     query_id: str,
@@ -330,6 +381,9 @@ def _make_query_rows(
                 "promotion_flag": promotion_flag,
                 "competitor_price_delta": competitor_price_delta,
                 "competitor_availability_rate": competitor_availability_rate,
+                "marketplace_supply_segment": "baseline",
+                "is_cold_start_supply": False,
+                "exposure_skew_score": 0.0,
                 "number_of_amenities": number_of_amenities,
                 **amenities,
                 "_utility": utility,
@@ -369,6 +423,74 @@ def _make_query_rows(
         best_row["label"] = 1.0
 
     return sorted(display_order, key=lambda row: int(row["position"]))
+
+
+def _apply_marketplace_controls(
+    rows: list[dict[str, Any]],
+    config: SyntheticMarketplaceConfig,
+) -> None:
+    if not rows:
+        return
+    rng = random.Random(config.seed + 10_000)
+    property_ids = sorted({str(row["prop_id"]) for row in rows})
+    popular_pool_size = max(
+        1,
+        round(len(property_ids) * (1.0 - config.supply_concentration)),
+    )
+    popular_pool = property_ids[:popular_pool_size]
+
+    cold_index = 0
+    for row in rows:
+        segment = "long_tail"
+        if rng.random() < config.cold_start_rate:
+            cold_id = f"cold-start-{cold_index:06d}"
+            cold_index += 1
+            _replace_property_id(row, cold_id)
+            segment = "cold_start"
+        elif rng.random() < config.supply_concentration:
+            _replace_property_id(row, rng.choice(popular_pool))
+            segment = "popular"
+        row["marketplace_supply_segment"] = segment
+        row["is_cold_start_supply"] = segment == "cold_start"
+
+    if config.exposure_skew > 0.0:
+        _apply_exposure_skew(rows, config.exposure_skew, rng)
+    rows.sort(key=lambda row: (str(row["query_id"]), int(row["position"])))
+
+
+def _replace_property_id(row: dict[str, Any], property_id: str) -> None:
+    row["prop_id"] = property_id
+    row["item_id"] = property_id
+    row["group_id"] = property_id
+
+
+def _apply_exposure_skew(
+    rows: list[dict[str, Any]],
+    exposure_skew: float,
+    rng: random.Random,
+) -> None:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row["query_id"]), []).append(row)
+
+    for query_rows in grouped.values():
+        if query_rows and bool(query_rows[0]["is_unbiased"]):
+            continue
+        query_size = len(query_rows)
+        for row in query_rows:
+            segment = str(row["marketplace_supply_segment"])
+            segment_bonus = (
+                1.0 if segment == "popular" else -0.5 if segment == "cold_start" else 0.0
+            )
+            score = (
+                float(row["position"])
+                - exposure_skew * query_size * segment_bonus
+                + rng.random() * 0.001
+            )
+            row["exposure_skew_score"] = round(score, 6)
+        query_rows.sort(key=lambda row: float(row["exposure_skew_score"]))
+        for position, row in enumerate(query_rows, start=1):
+            row["position"] = position
 
 
 def _row_to_ranking_example(row: dict[str, Any]) -> RankingExample:

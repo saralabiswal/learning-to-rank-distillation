@@ -1,0 +1,32 @@
+[
+  {
+    "final_loss": null,
+    "model": "teacher-transformer",
+    "ndcg_at_10": 0.5233705104727052,
+    "ndcg_at_5": 0.4003914921638841
+  },
+  {
+    "final_loss": 1.7856525097574507,
+    "model": "student-no-kd-d16",
+    "ndcg_at_10": 0.4627566556375712,
+    "ndcg_at_5": 0.2685361999071456
+  },
+  {
+    "final_loss": 0.5360856694834573,
+    "model": "student-response-kd-d16",
+    "ndcg_at_10": 0.48632113740172034,
+    "ndcg_at_5": 0.2921006816712948
+  },
+  {
+    "final_loss": 0.9499833498682294,
+    "model": "student-feature-kd-d16",
+    "ndcg_at_10": 0.4764159558916569,
+    "ndcg_at_5": 0.35343693758283584
+  },
+  {
+    "final_loss": 0.7192104799406869,
+    "model": "student-relation-kd-d16",
+    "ndcg_at_10": 0.5980640878997797,
+    "ndcg_at_5": 0.4038436321693542
+  }
+]

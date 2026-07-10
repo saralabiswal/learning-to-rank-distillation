@@ -35,3 +35,11 @@ jobs:
           --items-per-query 4
           --student-epochs 1
           --output-dir /tmp/ltrd-artifacts
+
+      - name: Promotion gate smoke
+        run: >
+          python -m learning_to_rank_distillation.benchmark.promotion_check
+          --benchmark-table /tmp/ltrd-artifacts/benchmark_table.json
+          --registry-path /tmp/ltrd-artifacts/promotion_ci.sqlite
+          --max-ndcg-drop 0.50
+          --min-latency-improvement 0.25

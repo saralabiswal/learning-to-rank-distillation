@@ -1,0 +1,44 @@
+[
+  {
+    "exposure_gini_at_5": 0.2532467532467532,
+    "fairness_weight": 0.0,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_gini_at_5": 0.2532467532467532,
+    "fairness_weight": 0.25,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_gini_at_5": 0.2532467532467532,
+    "fairness_weight": 0.5,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_gini_at_5": 0.2532467532467532,
+    "fairness_weight": 1.0,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.6857142857142857,
+    "ndcg_at_5": 0.3762784755241149
+  },
+  {
+    "exposure_gini_at_5": 0.26666666666666666,
+    "fairness_weight": 2.0,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.7142857142857143,
+    "ndcg_at_5": 0.3748536959099282
+  },
+  {
+    "exposure_gini_at_5": 0.23015873015873015,
+    "fairness_weight": 4.0,
+    "is_pareto_efficient": true,
+    "low_exposure_impression_share": 0.8,
+    "ndcg_at_5": 0.4487145416761765
+  }
+]

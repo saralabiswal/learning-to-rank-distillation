@@ -1,0 +1,55 @@
+[
+  {
+    "artifact_dir": "artifacts/cross_dataset/synthetic",
+    "dataset": "synthetic",
+    "error": null,
+    "rows": [
+      {
+        "latency_p50_ms": 0.3636250039562583,
+        "latency_p99_ms": 0.5301267892355098,
+        "model": "teacher-lightgbm",
+        "model_size_bytes": 99305,
+        "ndcg_at_10": 0.8154648767857288,
+        "ndcg_at_5": 0.8154648767857288
+      },
+      {
+        "latency_p50_ms": 0.18339550297241658,
+        "latency_p99_ms": 0.28675946639850736,
+        "model": "student-no-kd-d16",
+        "model_size_bytes": 21248,
+        "ndcg_at_10": 0.75,
+        "ndcg_at_5": 0.75
+      },
+      {
+        "latency_p50_ms": 0.1946874981513247,
+        "latency_p99_ms": 0.24395221931627015,
+        "model": "student-kd-d8",
+        "model_size_bytes": 19136,
+        "ndcg_at_10": 0.7153382790366966,
+        "ndcg_at_5": 0.7153382790366966
+      }
+    ],
+    "status": "completed"
+  },
+  {
+    "artifact_dir": "artifacts/cross_dataset/esci",
+    "dataset": "esci",
+    "error": "data/esci contains no supported data files: ['.csv', '.parquet']",
+    "rows": [],
+    "status": "skipped"
+  },
+  {
+    "artifact_dir": "artifacts/cross_dataset/rectour",
+    "dataset": "rectour",
+    "error": "data/rectour contains no supported data files: ['.csv', '.json', '.jsonl', '.parquet']",
+    "rows": [],
+    "status": "skipped"
+  },
+  {
+    "artifact_dir": "artifacts/cross_dataset/movielens",
+    "dataset": "movielens",
+    "error": "data/movielens must contain ratings.csv",
+    "rows": [],
+    "status": "skipped"
+  }
+]

@@ -7,9 +7,13 @@ does not commit raw datasets, trained model binaries, local registries, or cache
 
 - `docs/architecture_diagram.png`
 - `artifacts/benchmark_table.json`
+- `artifacts/cross_dataset/cross_dataset_benchmark.json`
+- `artifacts/distillation_ablation.json`
 - `artifacts/quality_latency_pareto.png`
 - `artifacts/fairness_tradeoff.json`
 - `artifacts/fairness_tradeoff.png`
+- `artifacts/fairness_pareto_frontier.json`
+- `artifacts/fairness_pareto_frontier.png`
 - `data/esci/.gitkeep`
 - `data/rectour/.gitkeep`
 
@@ -20,8 +24,12 @@ states that it used real data.
 
 - Raw data under `data/esci/` and `data/rectour/`
 - Generated synthetic CSVs under `data/synthetic/`
+- Student serving bundles under `artifacts/bundles/`
 - Trained model files under `artifacts/models/`
+- Nested per-dataset benchmark artifacts under `artifacts/cross_dataset/*/`
 - Local promotion registries such as `artifacts/*.sqlite`
+- Local model registries such as `artifacts/model_registry.json`
+- Experiment logs such as `artifacts/**/experiments.jsonl`
 - Local caches such as `.pytest_cache/`, `.ruff_cache/`, `__pycache__/`, and
   `artifacts/.matplotlib-cache/`
 
@@ -31,6 +39,7 @@ Use the synthetic smoke path for committed benchmark artifacts:
 
 ```bash
 make benchmark
+make ablation
 ```
 
 Use the real ESCI path only after placing the official files under `data/esci/`:

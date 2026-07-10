@@ -1,41 +1,41 @@
 [
   {
-    "latency_p50_ms": 1.2334585044300184,
-    "latency_p99_ms": 1.5092772868229076,
+    "latency_p50_ms": 1.3209584867581725,
+    "latency_p99_ms": 1.6424827394075692,
     "model": "teacher-lightgbm",
-    "model_size_bytes": 111655,
+    "model_size_bytes": 111705,
     "ndcg_at_10": 0.523738080831719,
     "ndcg_at_5": 0.3762784755241149
   },
   {
-    "latency_p50_ms": 1.1538334947545081,
-    "latency_p99_ms": 1.43933931394713,
+    "latency_p50_ms": 1.1777085164794698,
+    "latency_p99_ms": 1.4802818099269643,
     "model": "student-no-kd-d16",
-    "model_size_bytes": 35712,
-    "ndcg_at_10": 0.551502623112898,
-    "ndcg_at_5": 0.4120541572008597
+    "model_size_bytes": 36096,
+    "ndcg_at_10": 0.5543071402608194,
+    "ndcg_at_5": 0.4181263677451651
   },
   {
-    "latency_p50_ms": 1.152458498836495,
-    "latency_p99_ms": 1.391002711316105,
+    "latency_p50_ms": 1.1738339817384258,
+    "latency_p99_ms": 1.4611205435357988,
     "model": "student-kd-d8",
-    "model_size_bytes": 33600,
-    "ndcg_at_10": 0.551502623112898,
+    "model_size_bytes": 33984,
+    "ndcg_at_10": 0.5482349297165139,
     "ndcg_at_5": 0.4120541572008597
   },
   {
-    "latency_p50_ms": 1.1550835042726249,
-    "latency_p99_ms": 1.330079507897608,
+    "latency_p50_ms": 1.1824370012618601,
+    "latency_p99_ms": 1.3759675057372078,
     "model": "student-kd-d16",
-    "model_size_bytes": 35712,
-    "ndcg_at_10": 0.551502623112898,
+    "model_size_bytes": 36096,
+    "ndcg_at_10": 0.5482349297165139,
     "ndcg_at_5": 0.4120541572008597
   },
   {
-    "latency_p50_ms": 1.1593129893299192,
-    "latency_p99_ms": 1.4297450127196496,
+    "latency_p50_ms": 1.2185215018689632,
+    "latency_p99_ms": 1.3867795036640018,
     "model": "student-kd-d32",
-    "model_size_bytes": 39936,
+    "model_size_bytes": 40320,
     "ndcg_at_10": 0.551502623112898,
     "ndcg_at_5": 0.4120541572008597
   }

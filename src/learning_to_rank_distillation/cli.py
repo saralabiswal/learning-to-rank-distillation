@@ -7,6 +7,12 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from learning_to_rank_distillation.adapters.synthetic import write_synthetic_rectour_csv
+from learning_to_rank_distillation.benchmark.distillation_ablation import (
+    format_markdown_table as format_ablation_table,
+)
+from learning_to_rank_distillation.benchmark.distillation_ablation import (
+    run_distillation_ablation,
+)
 from learning_to_rank_distillation.benchmark.run_all import (
     format_markdown_table,
     run_benchmark,
@@ -14,7 +20,7 @@ from learning_to_rank_distillation.benchmark.run_all import (
 from learning_to_rank_distillation.datasets import DatasetConfig, load_ranking_examples
 from learning_to_rank_distillation.models.teacher import LightGBMLambdaMARTTeacher
 
-DATASET_CHOICES = ("synthetic", "esci", "rectour")
+DATASET_CHOICES = ("synthetic", "esci", "rectour", "movielens")
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -41,6 +47,23 @@ def main(argv: Sequence[str] | None = None) -> None:
     train_teacher.add_argument("--limit", type=int, default=None)
     train_teacher.add_argument("--split", default="train")
     train_teacher.add_argument("--seed", type=int, default=13)
+
+    ablation = subparsers.add_parser(
+        "distillation-ablation",
+        help="Compare no-KD, response-KD, feature-KD, and relation-KD",
+        description="Compare no-KD, response-KD, feature-KD, and relation-KD.",
+    )
+    ablation.add_argument("--dataset", choices=DATASET_CHOICES, default="synthetic")
+    ablation.add_argument("--data-dir", type=Path, default=None)
+    ablation.add_argument("--output-dir", type=Path, default=Path("artifacts"))
+    ablation.add_argument("--num-queries", type=int, default=24)
+    ablation.add_argument("--items-per-query", type=int, default=6)
+    ablation.add_argument("--student-epochs", type=int, default=4)
+    ablation.add_argument("--teacher-epochs", type=int, default=4)
+    ablation.add_argument("--embedding-dim", type=int, default=16)
+    ablation.add_argument("--limit", type=int, default=None)
+    ablation.add_argument("--split", default="train")
+    ablation.add_argument("--seed", type=int, default=13)
 
     generate_synthetic = subparsers.add_parser(
         "generate-synthetic-rectour",
@@ -84,6 +107,21 @@ def main(argv: Sequence[str] | None = None) -> None:
         teacher = LightGBMLambdaMARTTeacher(random_state=args.seed).fit(examples)
         metadata_path = teacher.save(args.output_dir, examples)
         print(metadata_path)
+    elif args.command == "distillation-ablation":
+        rows = run_distillation_ablation(
+            dataset=args.dataset,
+            data_dir=args.data_dir,
+            output_dir=args.output_dir,
+            num_queries=args.num_queries,
+            items_per_query=args.items_per_query,
+            student_epochs=args.student_epochs,
+            teacher_epochs=args.teacher_epochs,
+            embedding_dim=args.embedding_dim,
+            seed=args.seed,
+            limit=args.limit,
+            split=args.split,
+        )
+        print(format_ablation_table(rows))
     elif args.command == "generate-synthetic-rectour":
         output_path = write_synthetic_rectour_csv(
             args.output_path,

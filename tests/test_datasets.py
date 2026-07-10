@@ -25,3 +25,17 @@ def test_load_ranking_examples_uses_esci_adapter(tmp_path: Path) -> None:
     examples = load_ranking_examples(DatasetConfig(name="esci", data_dir=data_dir))
 
     assert [example.label for example in examples] == [3.0, 0.0]
+
+
+def test_load_ranking_examples_uses_movielens_adapter(tmp_path: Path) -> None:
+    data_dir = tmp_path / "movielens"
+    data_dir.mkdir()
+    (data_dir / "ratings.csv").write_text(
+        "userId,movieId,rating\n1,10,4.0\n1,20,3.0\n",
+        encoding="utf-8",
+    )
+
+    examples = load_ranking_examples(DatasetConfig(name="movielens", data_dir=data_dir))
+
+    assert [example.query_id for example in examples] == ["user-1", "user-1"]
+    assert [example.label for example in examples] == [4.0, 3.0]

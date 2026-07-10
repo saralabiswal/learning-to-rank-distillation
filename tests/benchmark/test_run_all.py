@@ -19,6 +19,7 @@ def test_run_benchmark_produces_comparison_table_and_plot(tmp_path: Path) -> Non
     assert (tmp_path / "benchmark_table.json").exists()
     assert (tmp_path / "quality_latency_pareto.png").exists()
     assert (tmp_path / "fairness_tradeoff.png").exists()
+    assert (tmp_path / "fairness_pareto_frontier.png").exists()
     assert (tmp_path / "promotion_registry.sqlite").exists()
 
 
@@ -39,6 +40,7 @@ def test_run_benchmark_supports_esci_dataset(tmp_path: Path) -> None:
     assert {"teacher-lightgbm", "student-no-kd-d16", "student-kd-d4"} == model_names
     assert (output_dir / "benchmark_table.json").exists()
     assert (output_dir / "fairness_tradeoff.json").exists()
+    assert (output_dir / "fairness_pareto_frontier.json").exists()
 
 
 def _write_esci_benchmark_data(data_dir: Path) -> None:

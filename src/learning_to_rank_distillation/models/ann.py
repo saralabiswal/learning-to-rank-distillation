@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 import numpy as np
@@ -44,10 +45,13 @@ class FaissItemIndex:
         k: int,
     ) -> list[list[tuple[str, float]]]:
         query_embeddings = np.ascontiguousarray(query_embeddings, dtype=np.float32)
-        scores = query_embeddings @ self.embeddings.T
         top_k = min(k, len(self.item_ids))
-        indices = np.argsort(-scores, axis=1)[:, :top_k]
-        distances = np.take_along_axis(scores, indices, axis=1)
+        if self.index is not None and os.getenv("LTRD_USE_FAISS_SEARCH") == "1":
+            distances, indices = self.index.search(query_embeddings, top_k)
+        else:
+            scores = query_embeddings @ self.embeddings.T
+            indices = np.argsort(-scores, axis=1)[:, :top_k]
+            distances = np.take_along_axis(scores, indices, axis=1)
         results: list[list[tuple[str, float]]] = []
         for row_distances, row_indices in zip(distances, indices, strict=True):
             results.append(

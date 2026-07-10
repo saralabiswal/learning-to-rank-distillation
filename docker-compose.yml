@@ -1,0 +1,9 @@
+services:
+  ranking-api:
+    build: .
+    environment:
+      LTRD_BUNDLE_PATH: /app/bundle
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts/bundles/current:/app/bundle:ro

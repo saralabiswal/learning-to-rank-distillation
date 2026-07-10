@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Literal
 
 from learning_to_rank_distillation.adapters.esci import ESCIAdapter
+from learning_to_rank_distillation.adapters.movielens import MovieLensAdapter
 from learning_to_rank_distillation.adapters.rectour import RecTourAdapter
 from learning_to_rank_distillation.adapters.synthetic import make_synthetic_ranking_data
 from learning_to_rank_distillation.schema import RankingExample
 
-DatasetName = Literal["synthetic", "esci", "rectour"]
+DatasetName = Literal["synthetic", "esci", "rectour", "movielens"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,4 +44,6 @@ def load_ranking_examples(config: DatasetConfig) -> list[RankingExample]:
         ).load(limit=config.limit)
     if config.name == "rectour":
         return RecTourAdapter(config.data_dir or Path("data/rectour")).load(limit=config.limit)
+    if config.name == "movielens":
+        return MovieLensAdapter(config.data_dir or Path("data/movielens")).load(limit=config.limit)
     raise ValueError(f"unsupported dataset: {config.name}")

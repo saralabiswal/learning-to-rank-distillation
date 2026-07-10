@@ -12,6 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
+from learning_to_rank_distillation.benchmark.fairness_pareto import run_fairness_pareto_search
 from learning_to_rank_distillation.benchmark.fairness_tradeoff import run_fairness_tradeoff
 from learning_to_rank_distillation.benchmark.metrics import ndcg_at_k
 from learning_to_rank_distillation.data import split_by_query
@@ -21,6 +22,10 @@ from learning_to_rank_distillation.distillation.response_based import train_resp
 from learning_to_rank_distillation.governance.promotion_gate import ModelMetrics, PromotionGate
 from learning_to_rank_distillation.models.student import StudentConfig, TwoTowerStudent
 from learning_to_rank_distillation.models.teacher import LightGBMLambdaMARTTeacher, content_hash
+from learning_to_rank_distillation.production.tracking import (
+    benchmark_metrics_from_rows,
+    log_experiment_run,
+)
 from learning_to_rank_distillation.schema import RankingExample
 
 
@@ -103,8 +108,28 @@ def run_benchmark(
         relevance_scores=teacher_scores.tolist(),
         output_dir=output_dir,
     )
+    run_fairness_pareto_search(
+        train_examples=query_split.train,
+        eval_examples=query_split.test,
+        relevance_scores=teacher_scores.tolist(),
+        output_dir=output_dir,
+    )
     _log_promotion_decision(rows, query_split.train, output_dir)
     _write_outputs(rows, output_dir)
+    log_experiment_run(
+        run_name=f"benchmark-{dataset}",
+        metrics=benchmark_metrics_from_rows(rows),
+        params={
+            "dataset": dataset,
+            "num_queries": num_queries,
+            "items_per_query": items_per_query,
+            "student_epochs": student_epochs,
+            "seed": seed,
+            "limit": limit,
+            "split": split,
+        },
+        tracking_path=output_dir / "experiments.jsonl",
+    )
     return rows
 
 
@@ -222,7 +247,11 @@ def format_markdown_table(rows: list[BenchmarkRow]) -> str:
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run the v1.0 LTRD benchmark.")
-    parser.add_argument("--dataset", choices=["synthetic", "esci", "rectour"], default="synthetic")
+    parser.add_argument(
+        "--dataset",
+        choices=["synthetic", "esci", "rectour", "movielens"],
+        default="synthetic",
+    )
     parser.add_argument("--data-dir", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts"))
     parser.add_argument("--num-queries", type=int, default=36)

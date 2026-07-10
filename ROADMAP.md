@@ -45,13 +45,13 @@ new research scope.
 
 Goal: move from "distillation works" to "distillation is well-understood here," with evidence, not just a working pipeline.
 
-- [ ] **Transformer-based teacher.** Add a small multi-task transformer ranker as a second teacher option alongside LightGBM — this is what earns the term "Ranking Foundation Model" rather than borrowing it from the job description.
-- [ ] **Feature-based distillation.** Auxiliary loss matching the student's item-tower embedding to a projection of the teacher's intermediate representation. Only justified if the response-based student (Tier 1) underperforms enough on an ablation to need it.
-- [ ] **Relation-based distillation.** Preserve the teacher's pairwise/listwise ranking relations directly in the student's loss, rather than only matching output distributions.
-- [ ] **Ablation table.** All three distillation methods compared head-to-head on the same benchmark suite, with a written explanation of which mattered most and why — this table is more valuable than any single method's result.
-- [ ] **Real multi-objective optimization for fairness.** Replace the Tier 1 greedy constrained rerank with proper Pareto-frontier search (scalarization sweep or NSGA-II) over relevance vs. exposure-fairness.
-- [ ] **Counterfactual / off-policy evaluation.** Inverse propensity scoring to correct offline evaluation for position bias in the logged data — directly relevant if RecTour's position field turns out to reflect a prior ranking policy rather than randomized order (see `REQUIREMENTS.md` DR-1).
-- [ ] **CI-enforced promotion gate.** GitHub Actions re-runs the benchmark suite on every PR and fails the build if a change regresses NDCG or latency past the Tier 1 promotion thresholds. Turns "governance discipline" from a README claim into something verifiable by opening the Actions tab.
+- [x] **Transformer-based teacher.** Add a small multi-task transformer ranker as a second teacher option alongside LightGBM — this is what earns the term "Ranking Foundation Model" rather than borrowing it from the job description.
+- [x] **Feature-based distillation.** Auxiliary loss matching the student's item-tower embedding to a projection of the teacher's intermediate representation. Only justified if the response-based student (Tier 1) underperforms enough on an ablation to need it.
+- [x] **Relation-based distillation.** Preserve the teacher's pairwise/listwise ranking relations directly in the student's loss, rather than only matching output distributions.
+- [x] **Ablation table.** All three distillation methods compared head-to-head on the same benchmark suite, with a written explanation of which mattered most and why — this table is more valuable than any single method's result.
+- [x] **Real multi-objective optimization for fairness.** Replace the Tier 1 greedy constrained rerank with proper Pareto-frontier search (scalarization sweep or NSGA-II) over relevance vs. exposure-fairness.
+- [x] **Counterfactual / off-policy evaluation.** Inverse propensity scoring to correct offline evaluation for position bias in the logged data — directly relevant if RecTour's position field turns out to reflect a prior ranking policy rather than randomized order (see `REQUIREMENTS.md` DR-1).
+- [x] **CI-enforced promotion gate.** GitHub Actions re-runs the benchmark suite on every PR and fails the build if a change regresses NDCG or latency past the Tier 1 promotion thresholds. Turns "governance discipline" from a README claim into something verifiable by opening the Actions tab.
 
 ---
 
@@ -59,10 +59,10 @@ Goal: move from "distillation works" to "distillation is well-understood here," 
 
 Goal: prove the pipeline is a tool, not a script that happens to work on one dataset.
 
-- [ ] **Expedia RecTour as secondary adapter.** Keep the guarded RecTour adapter ready for real files and use it to validate the travel-marketplace target when data access is restored.
-- [ ] **Third dataset adapter — MovieLens.** Fastest to add given how standard it is; useful as the "quickstart" example for anyone trying the toolkit for the first time.
-- [ ] **Synthetic marketplace generator.** A configurable generator (supply concentration level, cold-start rate, exposure skew) so the fairness reranker can be stress-tested without needing any of the three real datasets — also the fastest way for someone else to try the fairness component without a data-access step at all.
-- [ ] **Cross-dataset benchmark comparison.** One table showing teacher/student quality-vs-latency trade-offs across ESCI, synthetic, and RecTour when real RecTour files are available.
+- [x] **Expedia RecTour as secondary adapter.** Keep the guarded RecTour adapter ready for real files and use it to validate the travel-marketplace target when data access is restored.
+- [x] **Third dataset adapter — MovieLens.** Fastest to add given how standard it is; useful as the "quickstart" example for anyone trying the toolkit for the first time.
+- [x] **Synthetic marketplace generator.** A configurable generator (supply concentration level, cold-start rate, exposure skew) so the fairness reranker can be stress-tested without needing any of the three real datasets — also the fastest way for someone else to try the fairness component without a data-access step at all.
+- [x] **Cross-dataset benchmark comparison.** One table showing teacher/student quality-vs-latency trade-offs across ESCI, synthetic, and RecTour when real RecTour files are available.
 
 ---
 
@@ -70,14 +70,14 @@ Goal: prove the pipeline is a tool, not a script that happens to work on one dat
 
 Goal: move from research-shaped code to something that resembles what would actually get deployed.
 
-- [ ] **Artifact bundle format.** Save/load a coherent bundle containing student model weights, vectorizer, feature schema, item embeddings/index metadata, training config, metrics, and data hash.
-- [ ] **Real serving endpoint.** Student model behind FastAPI, item embeddings in a FAISS or ScaNN index, actual ANN retrieval rather than in-memory brute-force scoring.
-- [ ] **ANN index lifecycle.** Separate job to build, validate, version, and atomically publish a compatible `model + vectorizer + index` bundle.
-- [ ] **Load testing.** Locust or k6 load test producing real p50/p95/p99 latency numbers under simulated concurrent traffic, replacing the Tier 1 batch-scoring latency estimate.
-- [ ] **Experiment tracking.** MLflow or Weights & Biases wired into training runs, replacing ad hoc script output.
-- [ ] **Model registry integration.** Promotion gate (Tier 1/2) writes to a real model registry (MLflow Model Registry or equivalent) instead of a local SQLite log.
-- [ ] **Runtime monitoring.** Emit OpenTelemetry/Prometheus-friendly metrics for latency, errors, empty results, feature missingness, score distribution, drift, and exposure fairness.
-- [ ] **Containerization.** Dockerfile + docker-compose for the serving endpoint, so the whole thing runs with one command on someone else's machine.
+- [x] **Artifact bundle format.** Save/load a coherent bundle containing student model weights, vectorizer, feature schema, item embeddings/index metadata, training config, metrics, and data hash.
+- [x] **Real serving endpoint.** Student model behind FastAPI, item embeddings in a FAISS-compatible index, native FAISS search opt-in, and stable NumPy fallback for local runtimes with FAISS/Torch conflicts.
+- [x] **ANN index lifecycle.** Separate job to build, validate, version, and atomically publish a compatible `model + vectorizer + index` bundle.
+- [x] **Load testing.** Locust or k6 load test producing real p50/p95/p99 latency numbers under simulated concurrent traffic, replacing the Tier 1 batch-scoring latency estimate.
+- [x] **Experiment tracking.** MLflow or Weights & Biases wired into training runs, replacing ad hoc script output.
+- [x] **Model registry integration.** Promotion gate (Tier 1/2) writes to a real model registry (MLflow Model Registry or equivalent) instead of a local SQLite log.
+- [x] **Runtime monitoring.** Emit OpenTelemetry/Prometheus-friendly metrics for latency, errors, empty results, feature missingness, score distribution, drift, and exposure fairness.
+- [x] **Containerization.** Dockerfile + docker-compose for the serving endpoint, so the whole thing runs with one command on someone else's machine.
 
 ---
 
@@ -85,10 +85,10 @@ Goal: move from research-shaped code to something that resembles what would actu
 
 Goal: make the work legible to people who will never clone the repo.
 
-- [ ] **Interactive Pareto dashboard.** Streamlit app with a live exposure-floor slider updating the relevance-vs-fairness trade-off in real time — the artifact to actually screen-share, far more persuasive live than a static plot.
-- [ ] **Technical write-up.** A 4–6 page piece in the style of Expedia's own RecTour/MORS workshop papers — publishable as a blog post, shareable on LinkedIn, potentially shapeable toward an actual workshop submission.
-- [ ] **Polished packaging.** PyPI publish, README badges (build status, license, PyPI version), a proper `CONTRIBUTING.md` if the project starts attracting outside interest.
-- [ ] **Architecture diagram, professionally rendered** — not a hand-sketch, something that could sit in a slide deck.
+- [x] **Interactive Pareto dashboard.** Streamlit app with a live exposure-floor slider updating the relevance-vs-fairness trade-off in real time — the artifact to actually screen-share, far more persuasive live than a static plot.
+- [x] **Technical write-up.** A 4–6 page piece in the style of Expedia's own RecTour/MORS workshop papers — publishable as a blog post, shareable on LinkedIn, potentially shapeable toward an actual workshop submission.
+- [ ] **Polished packaging.** README badges and `CONTRIBUTING.md` are done; PyPI publishing remains pending because it requires an external release credential and publish step.
+- [x] **Architecture diagram, professionally rendered** — not a hand-sketch, something that could sit in a slide deck.
 
 ---
 

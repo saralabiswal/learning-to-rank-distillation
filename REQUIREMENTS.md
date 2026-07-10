@@ -120,7 +120,7 @@ Product and source files are optional but used when present.
 
 - **FR-6.1:** `README.md` — motivation (stated honestly as originating from closing a named interview gap, generalized into reusable infrastructure), architecture diagram, reproduction steps, benchmark table.
 - **FR-6.2:** "Design Decisions" section mapping choices back to specific JD language.
-- **FR-6.3:** "What This Doesn't Cover" section — no online A/B test, exposure metric is a proxy, no live serving infrastructure in v1.0 (see `ROADMAP.md` Tier 4 for that).
+- **FR-6.3:** "What This Doesn't Cover" section — no online A/B test, exposure metric is a proxy, and no hosted production deployment.
 - **FR-6.4:** `ROADMAP.md` linked prominently from the top of `README.md` — this is what signals an ongoing project rather than a one-off, and should be treated as part of the v1.0 deliverable, not an afterthought.
 
 ---
@@ -140,10 +140,14 @@ Product and source files are optional but used when present.
   | faiss-cpu | ≥1.8 | ANN retrieval — CPU-only, deliberate (see NFR-2) |
   | scikit-learn | ≥1.4 | Query-grouped splitting, general metrics |
   | matplotlib | ≥3.8 | Pareto plots (static — Tier 5 owns interactive) |
+  | fastapi | ≥0.115 | Local serving endpoint |
+  | uvicorn | ≥0.30 | ASGI server |
+  | prometheus-client | ≥0.20 | Runtime metrics |
   | pytest | ≥8.0 | Testing |
   | ruff | ≥0.4 | Lint/format |
 
-  SQLite is stdlib (governance registry, FR-5.3) — no separate dependency. Jupyter is a dev-only tool for `notebooks/exploration.ipynb`, not part of the reproducible pipeline path.
+  SQLite is stdlib (governance registry, FR-5.3) — no separate dependency. Streamlit is an optional
+  dashboard extra, not required for the core reproducible pipeline.
 - **NFR-2 (Runtime):** Full v1.0 pipeline runs end-to-end in under ~2 hours on a single machine.
 - **NFR-3 (Code quality):** Adapter interface (Section 1) enforced — no dataset-specific logic outside `adapters/`. This is the requirement that makes Tier 3 (a second dataset) cheap later instead of a rewrite.
 - **NFR-4 (Honesty in framing):** Every README claim verifiable by running the code.
