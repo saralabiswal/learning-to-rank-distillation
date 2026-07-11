@@ -1,4 +1,7 @@
-"""Generate the architecture diagram used by README and the dashboard."""
+"""Generate the architecture diagram used by README and the dashboard.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -35,9 +38,13 @@ COLORS = {
 
 
 def main() -> None:
+    # Render at high resolution so the same PNG stays readable in README,
+    # Streamlit, and browser docs after each surface scales it differently.
     image = Image.new("RGB", (WIDTH, HEIGHT), COLORS["bg"])
     draw = ImageDraw.Draw(image)
 
+    # Follow the learning story: title and business question first, then the
+    # ranking lifecycle, artifacts, serving path, and footer.
     _title(draw)
     _business_goal(draw)
     _draw_main_flow(draw)
@@ -45,6 +52,7 @@ def main() -> None:
     _draw_serving_path(draw)
     _footer(draw)
 
+    # Save one canonical image path so docs and the dashboard never drift.
     image.save(OUTPUT, quality=95)
 
 

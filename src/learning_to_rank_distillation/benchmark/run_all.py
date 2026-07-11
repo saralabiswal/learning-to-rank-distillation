@@ -1,4 +1,7 @@
-"""End-to-end benchmark runner."""
+"""End-to-end benchmark runner.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -327,6 +330,8 @@ def format_markdown_table(rows: list[BenchmarkRow]) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    # This parser mirrors the Makefile and CI smoke benchmark so local and
+    # automated runs exercise the same dataset/configuration surface.
     parser = argparse.ArgumentParser(description="Run the v1.0 LTRD benchmark.")
     parser.add_argument(
         "--dataset",
@@ -341,6 +346,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--split", default="train")
     args = parser.parse_args(argv)
+
+    # Delegate training/evaluation to run_benchmark; main stays a thin wrapper
+    # that prints a human-readable table for terminal users.
     rows = run_benchmark(
         dataset=args.dataset,
         data_dir=args.data_dir,

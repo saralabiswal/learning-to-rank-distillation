@@ -1,4 +1,7 @@
-"""Distillation-method ablation benchmark."""
+"""Distillation-method ablation benchmark.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -169,6 +172,8 @@ def format_markdown_table(rows: list[DistillationAblationRow]) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    # Keep ablation controls explicit so a result can be reproduced from the
+    # command line without reading the Python implementation.
     parser = argparse.ArgumentParser(description="Run the distillation-method ablation.")
     parser.add_argument(
         "--dataset",
@@ -186,6 +191,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--split", default="train")
     parser.add_argument("--seed", type=int, default=13)
     args = parser.parse_args(argv)
+
+    # The runner owns the teacher/student training matrix; the CLI only formats
+    # the comparison so CI and humans see the same rows.
     rows = run_distillation_ablation(
         dataset=args.dataset,
         data_dir=args.data_dir,

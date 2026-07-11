@@ -1,5 +1,7 @@
 # Amazon ESCI Data Source
 
+Author: Sarala Biswal
+
 Downloaded from the official Amazon Science `esci-data` repository on July 10, 2026:
 
 - `shopping_queries_dataset_examples.parquet`

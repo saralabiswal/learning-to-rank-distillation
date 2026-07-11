@@ -1,4 +1,7 @@
-"""Command line interface for the ltrd package."""
+"""Command line interface for the ltrd package.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -24,6 +27,8 @@ DATASET_CHOICES = ("synthetic", "esci", "rectour", "movielens")
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    # Keep every user-facing workflow behind one parser so the CLI, Makefile,
+    # and docs expose the same dataset switches and output-path defaults.
     parser = argparse.ArgumentParser(prog="ltrd")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -78,8 +83,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     generate_synthetic.add_argument("--items-per-query", type=int, default=8)
     generate_synthetic.add_argument("--seed", type=int, default=13)
 
+    # Parse only after every subcommand is registered; this keeps help output
+    # complete and makes the optional argv argument easy to test.
     args = parser.parse_args(argv)
     if args.command == "benchmark":
+        # End-to-end comparison: adapter -> teacher -> student candidates ->
+        # benchmark artifacts.
         rows = run_benchmark(
             dataset=args.dataset,
             data_dir=args.data_dir,
@@ -93,6 +102,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
         print(format_markdown_table(rows))
     elif args.command == "train-teacher":
+        # Split teacher training out so users can inspect the strong offline
+        # model before using it as a distillation source.
         examples = load_ranking_examples(
             DatasetConfig(
                 name=args.dataset,
@@ -108,6 +119,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         metadata_path = teacher.save(args.output_dir, examples)
         print(metadata_path)
     elif args.command == "distillation-ablation":
+        # Compare labels-only training against the supported KD strategies
+        # while holding dataset and student shape fixed.
         rows = run_distillation_ablation(
             dataset=args.dataset,
             data_dir=args.data_dir,
@@ -123,6 +136,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
         print(format_ablation_table(rows))
     elif args.command == "generate-synthetic-rectour":
+        # Create a stable RecTour-like file for demos and adapter checks
+        # without depending on private travel data.
         output_path = write_synthetic_rectour_csv(
             args.output_path,
             num_queries=args.num_queries,

@@ -1,5 +1,7 @@
 # Contributing
 
+Author: Sarala Biswal
+
 ## Local Setup
 
 ```bash
@@ -24,4 +26,4 @@ only be published when the data source, version, download date, and subsampling 
 - `make lint`
 - `make test`
 - `make benchmark` when benchmark behavior or artifacts change
-- Update `README.md` or `ROADMAP.md` when scope or public claims change
+- Update `README.md` or the relevant public docs when scope or public claims change

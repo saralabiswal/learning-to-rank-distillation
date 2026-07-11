@@ -1,4 +1,7 @@
-"""CLI check for CI-enforced benchmark promotion gates."""
+"""CLI check for CI-enforced benchmark promotion gates.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -73,6 +76,8 @@ def _file_hash(path: Path) -> str:
 
 
 def main(argv: list[str] | None = None) -> None:
+    # This is executable governance: CI can run the same thresholds that a
+    # release owner would use during manual model-promotion review.
     parser = argparse.ArgumentParser(description="Fail if benchmark promotion policy fails.")
     parser.add_argument("--benchmark-table", type=Path, required=True)
     parser.add_argument("--registry-path", type=Path, default=Path("artifacts/promotion_ci.sqlite"))
@@ -81,6 +86,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--candidate-prefix", default="student-kd")
     args = parser.parse_args(argv)
 
+    # The decision object carries both the final promote/reject result and the
+    # failed stages needed to explain why a candidate did not pass.
     decision = check_benchmark_promotion(
         benchmark_table=args.benchmark_table,
         registry_path=args.registry_path,
@@ -90,6 +97,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     print(json.dumps(_decision_summary(decision), indent=2, sort_keys=True))
     if not decision.promoted:
+        # Non-zero exit status turns a governance failure into a CI failure
+        # instead of leaving it as a dashboard-only observation.
         sys.exit(1)
 
 

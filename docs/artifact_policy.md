@@ -1,5 +1,7 @@
 # Artifact Policy
 
+Author: Sarala Biswal
+
 This repo keeps lightweight, reviewable artifacts that make the project legible from a clone. It
 does not commit raw datasets, trained model binaries, local registries, or cache directories.
 

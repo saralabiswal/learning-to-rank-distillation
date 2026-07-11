@@ -1,4 +1,7 @@
-"""Decision-oriented dashboard for ranking quality and exposure fairness artifacts."""
+"""Decision-oriented dashboard for ranking quality and exposure fairness artifacts.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -100,6 +103,8 @@ METRIC_GLOSSARY = (
 
 
 def main() -> None:
+    # Page configuration must happen before any Streamlit output, otherwise
+    # Streamlit rejects layout/page-title changes after rendering starts.
     st.set_page_config(
         page_title="LTRD Ranking Dashboard",
         page_icon="LTRD",
@@ -108,16 +113,22 @@ def main() -> None:
     _configure_altair()
     _inject_css()
 
+    # The sidebar controls which artifact folder drives every chart. Keeping all
+    # table loading here makes each tab a pure rendering step.
     config = _select_artifact_set()
     benchmark = _prepare_benchmark(_load_rows(config.path / "benchmark_table.json"))
     pareto = _prepare_pareto(_load_rows(config.path / "fairness_pareto_frontier.json"))
     tradeoff = _prepare_tradeoff(_load_rows(config.path / "fairness_tradeoff.json"))
 
+    # Render the explanatory frame before charts so a non-ML reader knows what
+    # business decision the numbers are meant to support.
     _render_header(config)
     _render_artifact_status(config, benchmark, pareto, tradeoff)
     _render_what_you_are_viewing(config)
 
     if benchmark.empty and pareto.empty and tradeoff.empty:
+        # Stop early when no artifacts exist; the rest of the page assumes at
+        # least one table is available for metrics or plots.
         st.warning(
             f"No dashboard artifacts were found under `{config.path}`. "
             f"Run `{config.command}` first."
@@ -126,6 +137,8 @@ def main() -> None:
 
     _render_decision_summary(config, benchmark, pareto, tradeoff)
 
+    # Tabs keep the dashboard from becoming one long scroll while preserving a
+    # learning sequence: concept, executive answer, evidence, raw tables, story.
     tabs = st.tabs(
         [
             "Start Here",

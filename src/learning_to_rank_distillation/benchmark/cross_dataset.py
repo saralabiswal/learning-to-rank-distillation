@@ -1,4 +1,7 @@
-"""Cross-dataset benchmark comparison."""
+"""Cross-dataset benchmark comparison.
+
+Author: Sarala Biswal
+"""
 
 from __future__ import annotations
 
@@ -79,6 +82,8 @@ def run_cross_dataset_benchmark(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    # Cross-dataset runs validate the adapter boundary: each dataset should
+    # produce the shared contract without changing model or benchmark code.
     parser = argparse.ArgumentParser(description="Run cross-dataset benchmark comparison.")
     parser.add_argument(
         "--datasets",
@@ -93,6 +98,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--seed", type=int, default=13)
     args = parser.parse_args(argv)
+
+    # Print JSON because this command is mostly used as regression evidence and
+    # can be consumed directly by docs, dashboards, or CI diagnostics.
     results = run_cross_dataset_benchmark(
         datasets=tuple(args.datasets),
         output_dir=args.output_dir,

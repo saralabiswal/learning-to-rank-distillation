@@ -1,5 +1,7 @@
 # Amazon ESCI Benchmark Artifacts
 
+Author: Sarala Biswal
+
 Generated from local Amazon ESCI files under `data/esci/`.
 
 Run command:

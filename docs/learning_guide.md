@@ -1,5 +1,7 @@
 # Learning Guide
 
+Author: Sarala Biswal
+
 This guide explains the project as a visual walkthrough. Read it as a learning path: what problem
 the repo solves, how data moves through the system, how teacher-student distillation works, and how
 the research code becomes production-shaped ranking infrastructure.
