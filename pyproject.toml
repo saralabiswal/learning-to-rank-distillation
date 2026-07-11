@@ -28,6 +28,8 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.4",
+    # Required by FastAPI/Starlette TestClient in tests/production/test_serving.py.
+    "httpx2>=2.0",
 ]
 dashboard = [
     "altair>=5.0",
