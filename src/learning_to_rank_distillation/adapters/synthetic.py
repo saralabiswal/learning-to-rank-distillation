@@ -221,10 +221,7 @@ def make_synthetic_ranking_data(
     items_per_query: int = 8,
     seed: int = 13,
 ) -> list[RankingExample]:
-    """Create deterministic examples matching the RankingExample contract.
-
-    Implements the AGENTS.md fallback path for an empty data/rectour directory.
-    """
+    """Create deterministic examples matching the RankingExample contract."""
 
     rows = make_synthetic_rectour_rows(
         num_queries=num_queries,

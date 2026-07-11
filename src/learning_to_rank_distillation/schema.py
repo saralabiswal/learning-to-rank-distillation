@@ -10,10 +10,7 @@ FeatureValue = bool | int | float | str | None
 
 @dataclass(frozen=True, slots=True)
 class RankingExample:
-    """The dataset-agnostic row contract used by every downstream component.
-
-    Implements REQUIREMENTS.md Section 1.
-    """
+    """The dataset-agnostic row contract used by every downstream component."""
 
     query_id: str
     item_id: str

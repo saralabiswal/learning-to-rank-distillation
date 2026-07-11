@@ -25,7 +25,8 @@ benchmark-esci:
 		--dataset esci \
 		--data-dir data/esci \
 		--limit 5000 \
-		--output-dir artifacts
+		--student-epochs 2 \
+		--output-dir artifacts/esci
 
 ablation:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m learning_to_rank_distillation.benchmark.distillation_ablation \

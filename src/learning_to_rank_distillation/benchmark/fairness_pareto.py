@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
 
@@ -50,20 +51,99 @@ def _plot(rows: list[ParetoSearchRow], output_path: Path) -> None:
     matplotlib.use("Agg", force=True)
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(8.4, 5.0))
     x = [row.low_exposure_impression_share for row in rows]
     y = [row.ndcg_at_5 for row in rows]
-    colors = ["tab:green" if row.is_pareto_efficient else "tab:gray" for row in rows]
-    ax.scatter(x, y, c=colors, s=52)
-    for row, x_value, y_value in zip(rows, x, y, strict=True):
-        ax.annotate(f"{row.fairness_weight:g}", (x_value, y_value), fontsize=8)
+    ax.plot(x, y, color="#b7c0cb", linewidth=1.2, zorder=1)
+    grouped = _group_by_coordinate(rows)
+    for index, ((x_value, y_value), grouped_rows) in enumerate(grouped.items()):
+        is_efficient = any(row.is_pareto_efficient for row in grouped_rows)
+        color = "#1f7a4d" if is_efficient else "#777f8a"
+        ax.scatter(
+            x_value,
+            y_value,
+            c=color,
+            s=76 + 16 * (len(grouped_rows) - 1),
+            edgecolors="white",
+            linewidths=0.9,
+            zorder=3,
+        )
+        ax.annotate(
+            _weight_label([row.fairness_weight for row in grouped_rows], is_efficient),
+            (x_value, y_value),
+            xytext=_pareto_label_offset([row.fairness_weight for row in grouped_rows], index),
+            textcoords="offset points",
+            fontsize=8.5,
+            fontweight="semibold",
+            bbox={
+                "boxstyle": "round,pad=0.2",
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.86,
+            },
+            arrowprops={"arrowstyle": "-", "color": "#8a94a3", "lw": 0.7},
+            zorder=4,
+        )
+    _pad_axes(ax, x, y)
     ax.set_xlabel("Top-5 low-exposure impression share")
     ax.set_ylabel("NDCG@5")
     ax.set_title("Scalarized relevance/fairness Pareto search")
-    ax.grid(True, alpha=0.25)
+    ax.grid(True, alpha=0.22)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.text(
+        0.01,
+        0.02,
+        "Green points are Pareto-efficient; gray points are dominated on this benchmark run.",
+        transform=ax.transAxes,
+        fontsize=8.5,
+        color="#5c6875",
+    )
     fig.tight_layout()
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
+
+
+def _group_by_coordinate(
+    rows: list[ParetoSearchRow],
+) -> dict[tuple[float, float], list[ParetoSearchRow]]:
+    grouped: dict[tuple[float, float], list[ParetoSearchRow]] = defaultdict(list)
+    for row in rows:
+        key = (round(row.low_exposure_impression_share, 6), round(row.ndcg_at_5, 6))
+        grouped[key].append(row)
+    return dict(grouped)
+
+
+def _weight_label(values: list[float], is_efficient: bool) -> str:
+    labels = [f"{value:g}" for value in values]
+    prefix = "Pareto " if is_efficient else ""
+    if len(labels) == 1:
+        return f"{prefix}w={labels[0]}"
+    return f"{prefix}w={','.join(labels)}"
+
+
+def _pareto_label_offset(values: list[float], index: int) -> tuple[int, int]:
+    value_set = {round(value, 6) for value in values}
+    if 4.0 in value_set:
+        return (12, -4)
+    if 2.0 in value_set:
+        return (-84, -24)
+    if 1.0 in value_set:
+        return (-102, 16)
+    if 0.5 in value_set:
+        return (-112, -8)
+    if {0.0, 0.25}.issubset(value_set):
+        return (12, 14)
+    offsets = [(12, 12), (12, -22), (-84, 12), (-84, -22)]
+    return offsets[index % len(offsets)]
+
+
+def _pad_axes(ax: object, x_values: list[float], y_values: list[float]) -> None:
+    x_min, x_max = min(x_values), max(x_values)
+    y_min, y_max = min(y_values), max(y_values)
+    x_pad = max((x_max - x_min) * 0.18, 0.025)
+    y_pad = max((y_max - y_min) * 0.25, 0.02)
+    ax.set_xlim(max(0.0, x_min - x_pad), min(1.0, x_max + x_pad))
+    ax.set_ylim(max(0.0, y_min - y_pad), min(1.0, y_max + y_pad))
 
 
 def _configure_matplotlib_cache(output_dir: Path) -> None:

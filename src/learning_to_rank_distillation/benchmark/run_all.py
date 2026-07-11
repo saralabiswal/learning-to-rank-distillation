@@ -209,17 +209,98 @@ def _plot_quality_latency(rows: list[BenchmarkRow], output_path: Path) -> None:
     matplotlib.use("Agg", force=True)
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(8.4, 5.0))
     for row in rows:
-        ax.scatter(row.latency_p99_ms, row.ndcg_at_5, s=48)
-        ax.annotate(row.model, (row.latency_p99_ms, row.ndcg_at_5), fontsize=8)
+        color, marker = _model_style(row.model)
+        ax.scatter(
+            row.latency_p99_ms,
+            row.ndcg_at_5,
+            s=72,
+            c=color,
+            marker=marker,
+            edgecolors="white",
+            linewidths=0.8,
+            zorder=3,
+        )
+        ax.annotate(
+            _short_model_name(row.model),
+            (row.latency_p99_ms, row.ndcg_at_5),
+            xytext=_model_label_offset(row.model),
+            textcoords="offset points",
+            fontsize=8.5,
+            fontweight="semibold",
+            bbox={
+                "boxstyle": "round,pad=0.18",
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.82,
+            },
+            arrowprops={
+                "arrowstyle": "-",
+                "color": "#8a94a3",
+                "lw": 0.7,
+                "shrinkA": 0,
+                "shrinkB": 4,
+            },
+            zorder=4,
+        )
+    _pad_axes(
+        ax,
+        [row.latency_p99_ms for row in rows],
+        [row.ndcg_at_5 for row in rows],
+    )
     ax.set_xlabel("p99 latency (ms)")
     ax.set_ylabel("NDCG@5")
-    ax.set_title("Quality vs. latency")
-    ax.grid(True, alpha=0.25)
+    ax.set_title("Quality vs. latency trade-off")
+    ax.grid(True, alpha=0.22)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.text(
+        0.01,
+        0.02,
+        "Upper-left is better: higher quality at lower p99 latency.",
+        transform=ax.transAxes,
+        fontsize=8.5,
+        color="#5c6875",
+    )
     fig.tight_layout()
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
+
+
+def _model_style(model: str) -> tuple[str, str]:
+    if model == "teacher-lightgbm":
+        return "#315a9a", "D"
+    if "no-kd" in model:
+        return "#9a5b00", "o"
+    return "#0b6f6a", "o"
+
+
+def _short_model_name(model: str) -> str:
+    return (
+        model.replace("teacher-lightgbm", "Teacher")
+        .replace("student-no-kd-d16", "No KD d16")
+        .replace("student-kd-d", "KD d")
+    )
+
+
+def _model_label_offset(model: str) -> tuple[int, int]:
+    offsets = {
+        "teacher-lightgbm": (-112, -2),
+        "student-no-kd-d16": (8, 10),
+        "student-kd-d8": (8, -18),
+        "student-kd-d16": (-74, -18),
+        "student-kd-d32": (-74, 10),
+    }
+    return offsets.get(model, (8, 8))
+
+
+def _pad_axes(ax: object, x_values: list[float], y_values: list[float]) -> None:
+    x_min, x_max = min(x_values), max(x_values)
+    y_min, y_max = min(y_values), max(y_values)
+    x_pad = max((x_max - x_min) * 0.18, 0.01)
+    y_pad = max((y_max - y_min) * 0.25, 0.01)
+    ax.set_xlim(x_min - x_pad, x_max + x_pad)
+    ax.set_ylim(y_min - y_pad, y_max + y_pad)
 
 
 def _configure_matplotlib_cache(output_dir: Path) -> None:

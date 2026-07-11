@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -85,20 +86,81 @@ def _plot(rows: list[FairnessTradeoffRow], output_path: Path) -> None:
     matplotlib.use("Agg", force=True)
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(8.4, 5.0))
     x = [row.low_exposure_impression_share for row in rows]
     y = [row.ndcg_at_5 for row in rows]
-    labels = [f"{row.exposure_floor:.1f}" for row in rows]
-    ax.plot(x, y, marker="o")
-    for label, x_value, y_value in zip(labels, x, y, strict=True):
-        ax.annotate(label, (x_value, y_value), fontsize=8)
+    ax.plot(x, y, color="#b7c0cb", linewidth=1.2, zorder=1)
+    grouped = _group_by_coordinate(rows)
+    for index, ((x_value, y_value), grouped_rows) in enumerate(grouped.items()):
+        ax.scatter(
+            x_value,
+            y_value,
+            s=76 + 16 * (len(grouped_rows) - 1),
+            c="#0b6f6a",
+            edgecolors="white",
+            linewidths=0.9,
+            zorder=3,
+        )
+        ax.annotate(
+            _floor_label([row.exposure_floor for row in grouped_rows]),
+            (x_value, y_value),
+            xytext=(12, 14 if index % 2 == 0 else -22),
+            textcoords="offset points",
+            fontsize=8.5,
+            fontweight="semibold",
+            bbox={
+                "boxstyle": "round,pad=0.2",
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.86,
+            },
+            arrowprops={"arrowstyle": "-", "color": "#8a94a3", "lw": 0.7},
+            zorder=4,
+        )
+    _pad_axes(ax, x, y)
     ax.set_xlabel("Top-5 low-exposure impression share")
     ax.set_ylabel("NDCG@5")
     ax.set_title("Relevance vs. exposure fairness")
-    ax.grid(True, alpha=0.25)
+    ax.grid(True, alpha=0.22)
+    ax.spines[["top", "right"]].set_visible(False)
+    if len(grouped) == 1:
+        ax.text(
+            0.01,
+            0.02,
+            "All tested exposure floors produced the same top-5 ranking on this smoke fixture.",
+            transform=ax.transAxes,
+            fontsize=8.5,
+            color="#5c6875",
+        )
     fig.tight_layout()
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
+
+
+def _group_by_coordinate(
+    rows: list[FairnessTradeoffRow],
+) -> dict[tuple[float, float], list[FairnessTradeoffRow]]:
+    grouped: dict[tuple[float, float], list[FairnessTradeoffRow]] = defaultdict(list)
+    for row in rows:
+        key = (round(row.low_exposure_impression_share, 6), round(row.ndcg_at_5, 6))
+        grouped[key].append(row)
+    return dict(grouped)
+
+
+def _floor_label(values: list[float]) -> str:
+    labels = [f"{value:.1f}" for value in values]
+    if len(labels) == 1:
+        return f"floor {labels[0]}"
+    return f"floors {labels[0]}-{labels[-1]}"
+
+
+def _pad_axes(ax: object, x_values: list[float], y_values: list[float]) -> None:
+    x_min, x_max = min(x_values), max(x_values)
+    y_min, y_max = min(y_values), max(y_values)
+    x_pad = max((x_max - x_min) * 0.18, 0.035)
+    y_pad = max((y_max - y_min) * 0.25, 0.02)
+    ax.set_xlim(max(0.0, x_min - x_pad), min(1.0, x_max + x_pad))
+    ax.set_ylim(max(0.0, y_min - y_pad), min(1.0, y_max + y_pad))
 
 
 def _configure_matplotlib_cache(output_dir: Path) -> None:

@@ -30,6 +30,7 @@ dev = [
     "ruff>=0.4",
 ]
 dashboard = [
+    "altair>=5.0",
     "streamlit>=1.37",
 ]
 

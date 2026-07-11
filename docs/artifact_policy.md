@@ -23,6 +23,10 @@ does not commit raw datasets, trained model binaries, local registries, or cache
 The benchmark artifacts are generated from the deterministic synthetic fallback unless a run clearly
 states that it used real data.
 
+Real Amazon ESCI benchmark artifacts may be generated under `artifacts/esci/` with
+`make benchmark-esci`. Those artifacts are reviewable derived outputs, not raw data; local model
+files, SQLite registries, experiment logs, and matplotlib caches under that directory remain ignored.
+
 ## Ignored
 
 - Raw data under `data/esci/` and `data/rectour/`, except the committed ESCI examples parquet and
@@ -30,6 +34,7 @@ states that it used real data.
 - Generated synthetic CSVs under `data/synthetic/`
 - Student serving bundles under `artifacts/bundles/`
 - Trained model files under `artifacts/models/`
+- Trained model files under nested artifact directories such as `artifacts/esci/models/`
 - Nested per-dataset benchmark artifacts under `artifacts/cross_dataset/*/`
 - Local promotion registries such as `artifacts/*.sqlite`
 - Local model registries such as `artifacts/model_registry.json`
@@ -51,3 +56,6 @@ Use the real ESCI path only after placing the official files under `data/esci/`:
 ```bash
 make benchmark-esci
 ```
+
+This writes real-data benchmark tables and plots to `artifacts/esci/` so they do not overwrite the
+top-level synthetic smoke artifacts.

@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Learning-to-Rank Distillation Learning Flow</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f9;
+        --surface: #ffffff;
+        --surface-alt: #eef3f8;
+        --ink: #17202a;
+        --muted: #5c6875;
+        --line: #d5dde6;
+        --accent: #0b6f6a;
+        --accent-2: #315a9a;
+        --accent-3: #8a4a0a;
+        --good: #1f7a4d;
+        --warn: #9a5b00;
+        --shadow: 0 14px 35px rgba(23, 32, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--accent-2);
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 306px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        background: #111827;
+        color: #f8fafc;
+      }
+
+      .sidebar-inner {
+        display: grid;
+        gap: 20px;
+        padding: 34px 24px;
+      }
+
+      .brand-title {
+        max-width: 240px;
+        font-size: 1.45rem;
+      }
+
+      .sidebar-copy {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 0.96rem;
+      }
+
+      .side-nav {
+        display: grid;
+        gap: 7px;
+        margin: 4px 0;
+      }
+
+      .side-nav a {
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        color: #f8fafc;
+        font-size: 0.91rem;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .side-nav a:hover {
+        background: rgba(255, 255, 255, 0.09);
+      }
+
+      .side-note {
+        padding: 13px;
+        border: 1px solid rgba(155, 215, 209, 0.32);
+        border-radius: 8px;
+        background: rgba(11, 111, 106, 0.18);
+        color: #e6fffb;
+        font-size: 0.88rem;
+      }
+
+      .side-note strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #ffffff;
+      }
+
+      .sidebar-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: #9bd7d1;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        max-width: 860px;
+        font-size: clamp(2.2rem, 4vw, 4.4rem);
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 9px 13px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        background: #ffffff;
+        color: #17202a;
+      }
+
+      .content {
+        min-width: 0;
+        padding: 36px min(5vw, 64px) 66px;
+      }
+
+      section {
+        margin-top: 34px;
+      }
+
+      .content > section:first-child {
+        margin-top: 0;
+      }
+
+      .intro {
+        display: grid;
+        gap: 18px;
+      }
+
+      .intro h2 {
+        max-width: 960px;
+        font-size: clamp(2.1rem, 4.8vw, 4.8rem);
+      }
+
+      .intro-copy {
+        max-width: 860px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      .intro-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .intro-actions .button {
+        border-color: var(--line);
+        background: var(--ink);
+      }
+
+      .intro-actions .button.secondary {
+        background: var(--surface-alt);
+        color: var(--ink);
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+        gap: 28px;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .panel-pad {
+        padding: 22px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(128px, 1fr));
+        gap: 10px;
+        align-items: stretch;
+      }
+
+      .flow-card {
+        position: relative;
+        min-height: 132px;
+        padding: 16px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .flow-card:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -9px;
+        width: 8px;
+        height: 8px;
+        border-top: 2px solid var(--accent);
+        border-right: 2px solid var(--accent);
+        transform: translateY(-50%) rotate(45deg);
+        background: var(--bg);
+      }
+
+      .flow-card .num,
+      .step .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background: #dcefeb;
+        color: #0b514e;
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .flow-card h3,
+      .step h3,
+      .mini-card h3 {
+        font-size: 1rem;
+      }
+
+      .flow-card p,
+      .step p,
+      .mini-card p,
+      .callout p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .callout {
+        border-left: 4px solid var(--accent);
+        background: #e8f4f1;
+      }
+
+      .callout.warn {
+        border-left-color: var(--warn);
+        background: #fbf0dc;
+      }
+
+      .image-frame {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .image-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .caption {
+        margin: 0;
+        padding: 10px 12px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .step {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 16px;
+      }
+
+      .swimlane {
+        display: grid;
+        gap: 12px;
+      }
+
+      .lane {
+        display: grid;
+        grid-template-columns: 190px minmax(0, 1fr);
+        gap: 14px;
+        align-items: stretch;
+      }
+
+      .lane-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 72px;
+        border-radius: 8px;
+        background: #162033;
+        color: #ffffff;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .lane-items {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .lane-item {
+        min-height: 72px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .lane-item strong {
+        display: block;
+        font-size: 0.94rem;
+      }
+
+      .lane-item span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .mini-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 16px;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 4px 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface-alt);
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .tech-map {
+        display: grid;
+        grid-template-columns: 1.1fr 1.5fr;
+        gap: 18px;
+      }
+
+      .code-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .code-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .code-list li:last-child {
+        border-bottom: 0;
+      }
+
+      code {
+        border-radius: 5px;
+        background: #edf1f5;
+        padding: 2px 5px;
+        color: #243247;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          monospace;
+        font-size: 0.92em;
+      }
+
+      pre {
+        overflow-x: auto;
+        margin: 12px 0 0;
+        padding: 14px;
+        border: 1px solid #253247;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5edf6;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          monospace;
+        font-size: 0.84rem;
+        line-height: 1.55;
+      }
+
+      pre code {
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font-size: inherit;
+      }
+
+      .developer-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .developer-step {
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent-2);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 18px;
+      }
+
+      .developer-step h3 {
+        font-size: 1.03rem;
+      }
+
+      .developer-step p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .logic-list {
+        margin: 12px 0 0;
+        padding-left: 20px;
+        color: var(--muted);
+      }
+
+      .logic-list li {
+        margin: 6px 0;
+      }
+
+      .path-label {
+        display: inline-block;
+        margin-top: 10px;
+        color: var(--accent);
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      th,
+      td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #e9eef5;
+        font-size: 0.88rem;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        background: #ffffff;
+        padding: 26px 0;
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: relative;
+          height: auto;
+        }
+
+        .sidebar-inner {
+          padding: 24px;
+        }
+
+        .brand-title {
+          max-width: none;
+        }
+
+        .side-nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .content {
+          padding: 28px 20px 52px;
+        }
+
+        .section-head,
+        .tech-map {
+          grid-template-columns: 1fr;
+        }
+
+        .flow,
+        .steps,
+        .developer-grid,
+        .grid-3 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .lane {
+          grid-template-columns: 1fr;
+        }
+
+        .lane-items {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          width: min(100% - 24px, 1180px);
+        }
+
+        .side-nav {
+          grid-template-columns: 1fr;
+        }
+
+        .intro h2 {
+          font-size: 2.15rem;
+        }
+
+        .flow,
+        .steps,
+        .developer-grid,
+        .grid-2,
+        .grid-3,
+        .lane-items {
+          grid-template-columns: 1fr;
+        }
+
+        .flow-card:not(:last-child)::after {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Learning guide navigation">
+        <div class="sidebar-inner">
+          <p class="eyebrow">Learning-to-rank distillation</p>
+          <h1 class="brand-title">Project Learning Guide</h1>
+          <p class="sidebar-copy">
+            Navigate the repo from business problem to implementation, benchmark artifacts, and
+            serving shape.
+          </p>
+          <div class="side-nav">
+            <a href="#overview">Overview</a>
+            <a href="#summary">Summary Flow</a>
+            <a href="#detailed">Detailed Flow</a>
+            <a href="#technical">Technical Map</a>
+            <a href="#walkthrough">Developer Walkthrough</a>
+            <a href="#artifacts">Artifacts</a>
+          </div>
+          <div class="side-note">
+            <strong>Best route</strong>
+            Read Summary, Detailed Flow, Technical Map, Developer Walkthrough, then Artifacts.
+          </div>
+          <div class="sidebar-actions">
+            <a class="button secondary" href="learning_guide.md">Markdown guide</a>
+            <a class="button" href="technical_writeup.md">Technical write-up</a>
+            <a class="button" href="../README.md">Repo README</a>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content">
+      <section id="overview" class="intro panel panel-pad">
+        <p class="eyebrow">Visual learning path</p>
+        <h2>Learn the project from business problem to production-shaped ranking system.</h2>
+        <p class="intro-copy">
+          This page is the fastest way to understand the repo. It starts with the business flow,
+          then maps the model pipeline, code boundaries, benchmark artifacts, and developer-level
+          implementation logic.
+        </p>
+        <div class="intro-actions">
+          <a class="button secondary" href="#summary">Start with summary</a>
+          <a class="button" href="#walkthrough">Jump to developer walkthrough</a>
+        </div>
+      </section>
+
+      <section id="summary">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Summary flow</p>
+            <h2>The project in one pass</h2>
+          </div>
+          <p>
+            A search marketplace needs relevant results, low latency, exposure visibility, and
+            repeatable model promotion. This repo turns that into a teacher-student ranking system.
+          </p>
+        </div>
+
+        <div class="flow">
+          <div class="flow-card">
+            <span class="num">1</span>
+            <h3>Raw data</h3>
+            <p>Amazon ESCI, guarded RecTour, synthetic marketplace data, or MovieLens.</p>
+          </div>
+          <div class="flow-card">
+            <span class="num">2</span>
+            <h3>RankingExample</h3>
+            <p>Shared query, item, label, features, group, and position contract.</p>
+          </div>
+          <div class="flow-card">
+            <span class="num">3</span>
+            <h3>Teacher</h3>
+            <p>LightGBM LambdaMART trains for ranking quality within query groups.</p>
+          </div>
+          <div class="flow-card">
+            <span class="num">4</span>
+            <h3>Student</h3>
+            <p>PyTorch two-tower model learns labels and teacher behavior.</p>
+          </div>
+          <div class="flow-card">
+            <span class="num">5</span>
+            <h3>Evaluate</h3>
+            <p>NDCG, latency, model size, fairness, and promotion gate checks.</p>
+          </div>
+          <div class="flow-card">
+            <span class="num">6</span>
+            <h3>Serve</h3>
+            <p>Student bundle, item embeddings, API, metrics, and Docker skeleton.</p>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 18px;">
+          <div class="panel panel-pad callout">
+            <h3>Core idea</h3>
+            <p>
+              Train a strong teacher for quality, then distill into a smaller student that is shaped
+              for retrieval and serving.
+            </p>
+          </div>
+          <div class="panel panel-pad callout warn">
+            <h3>Scope boundary</h3>
+            <p>
+              This is an offline, production-shaped ranking system. It is not a live A/B testing
+              platform or a hosted production deployment.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="detailed">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Detailed flow</p>
+            <h2>How data becomes a ranked result</h2>
+          </div>
+          <p>
+            The detailed flow separates the system into dataset, model, evaluation, fairness, and
+            production layers. Each layer has a clear input and output.
+          </p>
+        </div>
+
+        <div class="panel panel-pad">
+          <div class="swimlane">
+            <div class="lane">
+              <div class="lane-label">Dataset layer</div>
+              <div class="lane-items">
+                <div class="lane-item">
+                  <strong>Amazon ESCI</strong>
+                  <span>Primary public search relevance flow.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>RecTour</strong>
+                  <span>Travel-marketplace adapter, guarded until real files exist.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Synthetic</strong>
+                  <span>Deterministic CI, demos, and fairness stress tests.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>MovieLens</strong>
+                  <span>Optional quickstart portability adapter.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="lane">
+              <div class="lane-label">Model layer</div>
+              <div class="lane-items">
+                <div class="lane-item">
+                  <strong>Feature vectorizers</strong>
+                  <span>Numeric features plus one-hot categorical values.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Teacher ranker</strong>
+                  <span>LightGBM LambdaMART optimizes query-list ranking.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Student ranker</strong>
+                  <span>Two towers produce query and item embeddings.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Distillation</strong>
+                  <span>Response, feature, and relation KD paths.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="lane">
+              <div class="lane-label">Decision layer</div>
+              <div class="lane-items">
+                <div class="lane-item">
+                  <strong>Quality</strong>
+                  <span>NDCG@5 and NDCG@10 over query groups.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Latency</strong>
+                  <span>Repeated p50 and p99 local scoring timings.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Fairness</strong>
+                  <span>Low-exposure share and exposure Gini.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Promotion</strong>
+                  <span>Executable gate compares candidate and teacher.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="lane">
+              <div class="lane-label">Serving layer</div>
+              <div class="lane-items">
+                <div class="lane-item">
+                  <strong>Bundle</strong>
+                  <span>Weights, vectorizer, metadata, and item embeddings.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Index lifecycle</strong>
+                  <span>Build, validate, version, publish current bundle.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>FastAPI</strong>
+                  <span><code>/health</code>, <code>/rank</code>, and <code>/metrics</code>.</span>
+                </div>
+                <div class="lane-item">
+                  <strong>Monitoring</strong>
+                  <span>Prometheus-friendly counters, gauges, histograms.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 18px;">
+          <div class="image-frame">
+            <img src="architecture_diagram.png" alt="Architecture diagram for the ranking system">
+            <p class="caption">
+              Architecture diagram: adapters feed the shared ranking contract, then teacher,
+              student, evaluation, fairness, and production layers build on top.
+            </p>
+          </div>
+          <div class="panel panel-pad">
+            <h3>Dataset roles</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Dataset</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Amazon ESCI</td>
+                  <td>Primary public real-data learning-to-rank path.</td>
+                </tr>
+                <tr>
+                  <td>Expedia RecTour</td>
+                  <td>Secondary travel target; no claims until real files are present.</td>
+                </tr>
+                <tr>
+                  <td>Synthetic</td>
+                  <td>Fast, deterministic pipeline and fairness stress testing.</td>
+                </tr>
+                <tr>
+                  <td>MovieLens</td>
+                  <td>Optional adapter to prove the contract generalizes.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="technical">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Technical flow</p>
+            <h2>The implementation map</h2>
+          </div>
+          <p>
+            This section maps the learning concepts to the repo files so a reader can move from the
+            diagram to the actual code.
+          </p>
+        </div>
+
+        <div class="tech-map">
+          <div class="panel panel-pad">
+            <h3>Core row contract</h3>
+            <p>
+              Every adapter returns <code>RankingExample</code>. That is the main reason model,
+              benchmark, fairness, and serving code can stay dataset-agnostic.
+            </p>
+            <div class="tag-row">
+              <span class="tag">query_id</span>
+              <span class="tag">item_id</span>
+              <span class="tag">features</span>
+              <span class="tag">label</span>
+              <span class="tag">group_id</span>
+              <span class="tag">is_unbiased</span>
+              <span class="tag">position</span>
+            </div>
+          </div>
+
+          <div class="panel panel-pad">
+            <h3>Code path</h3>
+            <ul class="code-list">
+              <li><code>schema.py</code> defines the dataset-agnostic row contract.</li>
+              <li><code>adapters/esci.py</code> maps Amazon ESCI rows into ranking examples.</li>
+              <li><code>models/teacher.py</code> trains and saves the LightGBM LambdaMART teacher.</li>
+              <li><code>models/student.py</code> defines the PyTorch two-tower student.</li>
+              <li><code>distillation/</code> implements no-KD, response, feature, and relation KD.</li>
+              <li><code>benchmark/run_all.py</code> trains models and writes benchmark artifacts.</li>
+              <li><code>fairness/</code> computes exposure metrics and reranking trade-offs.</li>
+              <li><code>production/</code> builds bundles and serves ranked results.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="steps" style="margin-top: 18px;">
+          <div class="step">
+            <span class="num">A</span>
+            <h3>Teacher training</h3>
+            <p><code>LGBMRanker</code> receives grouped examples and optimizes LambdaMART.</p>
+          </div>
+          <div class="step">
+            <span class="num">B</span>
+            <h3>Student training</h3>
+            <p>Two towers encode query and item features, then score by dot product.</p>
+          </div>
+          <div class="step">
+            <span class="num">C</span>
+            <h3>Distillation</h3>
+            <p>KD blends teacher signals with supervised listwise relevance loss.</p>
+          </div>
+          <div class="step">
+            <span class="num">D</span>
+            <h3>Serving</h3>
+            <p>Student bundle stores vectorizer, item embeddings, weights, and metadata.</p>
+          </div>
+        </div>
+
+        <div class="panel panel-pad" style="margin-top: 18px;">
+          <h3>Distillation methods</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Signal</th>
+                <th>Question it answers</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>No-KD baseline</td>
+                <td>Labels only</td>
+                <td>How good is the student without teacher help?</td>
+              </tr>
+              <tr>
+                <td>Response KD</td>
+                <td>Teacher score distribution</td>
+                <td>Can the student match teacher outputs?</td>
+              </tr>
+              <tr>
+                <td>Feature KD</td>
+                <td>Teacher-side representation</td>
+                <td>Can the student match useful hidden representations?</td>
+              </tr>
+              <tr>
+                <td>Relation KD</td>
+                <td>Pairwise/listwise score relations</td>
+                <td>Can the student preserve ordering relationships?</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="walkthrough">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Developer walkthrough</p>
+            <h2>Understand the implementation from the inside out</h2>
+          </div>
+          <p>
+            The code is organized around one contract: every dataset becomes
+            <code>RankingExample</code>. Once that happens, teacher training, student distillation,
+            evaluation, fairness, promotion, and serving all run through the same interfaces.
+          </p>
+        </div>
+
+        <div class="developer-grid">
+          <div class="developer-step">
+            <span class="path-label">schema.py</span>
+            <h3>1. The shared row contract</h3>
+            <p>
+              All downstream code expects a query-item row with relevance, feature values, an
+              exposure group, and optional logging metadata. The guard that keeps
+              <code>position</code> out of <code>features</code> prevents leakage from observed
+              ranking logs into model training.
+            </p>
+            <pre><code>@dataclass(frozen=True, slots=True)
+class RankingExample:
+    query_id: str
+    item_id: str
+    features: dict[str, FeatureValue]
+    label: float
+    group_id: str
+    is_unbiased: bool
+    position: int | None
+
+    def __post_init__(self) -&gt; None:
+        if "position" in self.features:
+            raise ValueError("position must not be included as a training feature")</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">datasets.py</span>
+            <h3>2. Dataset selection is a thin router</h3>
+            <p>
+              The benchmark and CLI do not know whether the source is Amazon ESCI, RecTour,
+              MovieLens, or synthetic data. They pass a <code>DatasetConfig</code> into one loader,
+              and that loader picks the adapter.
+            </p>
+            <pre><code>if config.name == "esci":
+    return ESCIAdapter(
+        data_dir=config.data_dir or Path("data/esci"),
+        split=config.split,
+    ).load(limit=config.limit)
+
+if config.name == "rectour":
+    return RecTourAdapter(config.data_dir or Path("data/rectour")).load(limit=config.limit)</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">adapters/esci.py</span>
+            <h3>3. Amazon ESCI becomes ranking examples</h3>
+            <p>
+              ESCI labels are mapped to graded relevance, product/query text is converted into
+              compact lexical and metadata features, and <code>group_id</code> uses brand when
+              available so fairness can reason about exposure at a supplier-like level.
+            </p>
+            <pre><code>LABELS = {"E": 3.0, "S": 2.0, "C": 1.0, "I": 0.0}
+
+return RankingExample(
+    query_id=str(row["query_id"]),
+    item_id=str(row["product_id"]),
+    group_id=str(_clean_value(row.get("product_brand")) or product_id),
+    label=_label_to_relevance(row["esci_label"]),
+    is_unbiased=False,
+    position=None,
+    features=_features_from_row(row),
+)</code></pre>
+            <ul class="logic-list">
+              <li><code>query_title_token_overlap</code> and similar features capture simple text match.</li>
+              <li><code>product_id_hash_bucket</code> gives the model a stable categorical item proxy.</li>
+              <li>Missing product metadata is allowed; the adapter only fails on unsafe schema gaps.</li>
+            </ul>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">models/teacher.py</span>
+            <h3>4. The teacher optimizes grouped ranking quality</h3>
+            <p>
+              LambdaMART needs examples ordered by query plus a group-size list. The teacher
+              vectorizer turns mixed numeric and categorical features into a matrix, then LightGBM
+              trains with <code>objective="lambdarank"</code>.
+            </p>
+            <pre><code>ordered_examples, group_sizes = _ordered_examples_and_group_sizes(examples)
+features = self.vectorizer.fit_transform(ordered_examples)
+labels = np.asarray([example.label for example in ordered_examples], dtype=np.float32)
+
+self.model = lgb.LGBMRanker(
+    objective="lambdarank",
+    metric="ndcg",
+    n_estimators=self.n_estimators,
+)
+self.model.fit(features, labels, group=group_sizes)</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">models/student.py</span>
+            <h3>5. The student is serving-shaped</h3>
+            <p>
+              The student separates query and item features into two towers. At serving time item
+              embeddings can be precomputed, and request-time work is mainly query embedding plus
+              nearest-neighbor search.
+            </p>
+            <pre><code>def forward(self, query_features: torch.Tensor, item_features: torch.Tensor) -&gt; torch.Tensor:
+    query_embeddings = self.encode_query(query_features)
+    item_embeddings = self.encode_item(item_features)
+    return torch.sum(query_embeddings * item_embeddings, dim=1)</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">distillation/response_based.py</span>
+            <h3>6. Response KD transfers teacher behavior</h3>
+            <p>
+              Training blends two objectives: KL divergence against the teacher's softened score
+              distribution and a supervised listwise loss against labels. This keeps the student
+              anchored to relevance while learning teacher preferences.
+            </p>
+            <pre><code>kd_loss = F.kl_div(
+    F.log_softmax(student_scores / temperature, dim=0),
+    F.softmax(teacher_scores / temperature, dim=0),
+    reduction="batchmean",
+) * (temperature**2)
+
+supervised_loss = listwise_label_loss(student_scores, labels)
+return alpha * kd_loss + (1.0 - alpha) * supervised_loss</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">benchmark/run_all.py</span>
+            <h3>7. The benchmark is the end-to-end control loop</h3>
+            <p>
+              <code>run_benchmark</code> loads data, splits by query, trains the teacher, trains a
+              no-KD student, trains KD students across embedding sizes, evaluates latency and NDCG,
+              writes plots, runs fairness sweeps, and records a promotion decision.
+            </p>
+            <pre><code>examples = load_ranking_examples(DatasetConfig(name=dataset, data_dir=data_dir, limit=limit))
+query_split = split_by_query(examples, seed=seed)
+
+teacher = LightGBMLambdaMARTTeacher(random_state=seed, n_estimators=30).fit(query_split.train)
+teacher_scores = teacher.predict(query_split.test)
+
+no_kd_student, _ = train_no_kd_student(query_split.train, epochs=student_epochs)
+kd_student, _ = train_response_based_student(query_split.train, teacher_train_scores)</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">fairness/ and governance/</span>
+            <h3>8. Fairness and promotion are executable checks</h3>
+            <p>
+              The fairness layer treats <code>group_id</code> as an exposure group and compares
+              relevance with top-k exposure share. The promotion gate turns candidate-vs-teacher
+              comparison into a logged SQLite decision instead of a subjective README claim.
+            </p>
+            <pre><code>run_fairness_tradeoff(
+    train_examples=query_split.train,
+    eval_examples=query_split.test,
+    relevance_scores=teacher_scores.tolist(),
+    output_dir=output_dir,
+)
+
+PromotionGate(registry_path=output_dir / "promotion_registry.sqlite").evaluate(
+    candidate=candidate_metrics,
+    teacher=teacher_metrics,
+)</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">production/serving.py</span>
+            <h3>9. Serving loads a student bundle</h3>
+            <p>
+              The FastAPI app loads a bundle, builds an item index, converts request features into a
+              dummy query example, embeds that query with the student tower, and searches the item
+              index for top-k results.
+            </p>
+            <pre><code>@app.post("/rank")
+def rank(request: RankRequest) -&gt; dict[str, Any]:
+    query_example = _query_example(request.query_features)
+    query_embeddings = loaded_bundle.student.query_embeddings([query_example])
+    results = item_index.search(query_embeddings, k=request.k)[0]
+
+    return {
+        "results": [{"item_id": item_id, "score": score} for item_id, score in results],
+        "bundle_version": loaded_bundle.metadata.get("data_hash"),
+    }</code></pre>
+          </div>
+
+          <div class="developer-step">
+            <span class="path-label">Recommended run order</span>
+            <h3>10. How to exercise the full implementation</h3>
+            <p>
+              Start with tests, then run the synthetic benchmark, then the Amazon ESCI real-data
+              path when <code>data/esci</code> is present. Serving requires a locally built bundle at
+              <code>artifacts/bundles/current</code>.
+            </p>
+            <pre><code>make install
+make test
+make benchmark
+
+ltrd benchmark --dataset esci --data-dir data/esci --limit 5000
+make ablation
+make dashboard</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="artifacts">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Images and artifacts</p>
+            <h2>How to read the generated plots</h2>
+          </div>
+          <p>
+            These images are committed lightweight artifacts from local benchmark paths. Treat them
+            as learning and smoke-test evidence unless a run explicitly states real data was used.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <div class="image-frame">
+            <img
+              src="../artifacts/quality_latency_pareto.png"
+              alt="Quality versus latency Pareto plot"
+            >
+            <p class="caption">
+              Quality vs latency: compares ranking quality against serving cost.
+            </p>
+          </div>
+          <div class="image-frame">
+            <img
+              src="../artifacts/fairness_tradeoff.png"
+              alt="Fairness tradeoff plot"
+            >
+            <p class="caption">
+              Fairness trade-off: shows how exposure floors affect relevance and exposure.
+            </p>
+          </div>
+          <div class="image-frame">
+            <img
+              src="../artifacts/fairness_pareto_frontier.png"
+              alt="Fairness Pareto frontier plot"
+            >
+            <p class="caption">
+              Pareto frontier: highlights non-dominated relevance and fairness operating points.
+            </p>
+          </div>
+        </div>
+      </section>
+      </main>
+    </div>
+
+    <footer>
+      <div class="page">
+        <p>
+          Related docs:
+          <a href="learning_guide.md">learning_guide.md</a>,
+          <a href="technical_writeup.md">technical_writeup.md</a>,
+          <a href="../README.md">README.md</a>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

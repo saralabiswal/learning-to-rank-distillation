@@ -11,6 +11,10 @@ htmlcov/
 .venv/
 dist/
 build/
+AGENTS.md
+REQUIREMENTS.md
+ROADMAP.md
+requirements/
 artifacts/.matplotlib-cache/
 artifacts/**/.matplotlib-cache/
 artifacts/models/

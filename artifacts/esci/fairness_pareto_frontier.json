@@ -1,0 +1,44 @@
+[
+  {
+    "exposure_gini_at_5": 0.1918,
+    "fairness_weight": 0.0,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.1375,
+    "ndcg_at_5": 0.5889777635094904
+  },
+  {
+    "exposure_gini_at_5": 0.18581349206349207,
+    "fairness_weight": 0.25,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.1375,
+    "ndcg_at_5": 0.5889777635094904
+  },
+  {
+    "exposure_gini_at_5": 0.18001968503937008,
+    "fairness_weight": 0.5,
+    "is_pareto_efficient": true,
+    "low_exposure_impression_share": 0.14375,
+    "ndcg_at_5": 0.5889777635094904
+  },
+  {
+    "exposure_gini_at_5": 0.18021653543307087,
+    "fairness_weight": 1.0,
+    "is_pareto_efficient": true,
+    "low_exposure_impression_share": 0.15,
+    "ndcg_at_5": 0.58663481569677
+  },
+  {
+    "exposure_gini_at_5": 0.18021653543307087,
+    "fairness_weight": 2.0,
+    "is_pareto_efficient": false,
+    "low_exposure_impression_share": 0.15,
+    "ndcg_at_5": 0.586369400119442
+  },
+  {
+    "exposure_gini_at_5": 0.17451171875,
+    "fairness_weight": 4.0,
+    "is_pareto_efficient": true,
+    "low_exposure_impression_share": 0.15625,
+    "ndcg_at_5": 0.5850375543297488
+  }
+]

@@ -3,57 +3,88 @@
 [![CI](https://github.com/saralabiswal/learning-to-rank-distillation/actions/workflows/ci.yml/badge.svg)](https://github.com/saralabiswal/learning-to-rank-distillation/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Status](https://img.shields.io/badge/status-production--shaped-1a3a2a)
 
-Dataset-agnostic tooling for ranking-model distillation and marketplace-aware reranking.
+**A governed ranking lifecycle for search and marketplace ranking — from teacher training through promotion-gated serving.**
 
-v1.0 is scoped by [`REQUIREMENTS.md`](REQUIREMENTS.md). Future work lives in
-[`ROADMAP.md`](ROADMAP.md). A longer technical narrative is in
+Not a model notebook. A full lifecycle: train a strong offline teacher, distill it into a
+latency-safe student, prove the trade-off with fairness and promotion evidence, and package the
+result into a servable, monitored bundle.
+
+For a visual walkthrough, start with [`docs/learning_flow.html`](docs/learning_flow.html) or
+[`docs/learning_guide.md`](docs/learning_guide.md). For implementation depth, see
 [`docs/technical_writeup.md`](docs/technical_writeup.md).
 
-## Motivation
+---
 
-This project started as a focused way to close two gaps for an Expedia Senior Director, ML/AI
-interview loop: ranking-model distillation and multi-objective marketplace ranking. The code is
-intentionally built as reusable infrastructure instead of an Expedia-only script. Amazon ESCI is the
-primary public real-data flow because it has a query-candidate-relevance shape that maps cleanly to
-learning-to-rank. Expedia RecTour remains the secondary travel-marketplace target, and all downstream
-code consumes the shared `RankingExample` schema.
+## The Problem
+
+Ranking teams rarely fail on model quality. They fail on the decisions around the model — the ones
+that never show up in an offline NDCG number.
+
+| Failure mode | What actually happens |
+|---|---|
+| **The serving trap** | The best offline ranker is too large or too slow to serve at p99 latency budgets. Teams either ship a model they can't afford to run, or hand-roll a smaller one with no formal link back to the teacher's ranking behavior. |
+| **The silent exposure shift** | A ranking change that improves relevance can quietly starve specific suppliers or sellers of exposure. Without a fairness measurement built into the evaluation loop, that shift isn't caught until a business stakeholder notices. |
+| **The promotion-by-vibes problem** | "Does this look better?" is not a promotion policy. Without an executable gate, model promotion becomes a judgment call re-litigated on every release. |
+
+This repo treats ranking as a governed lifecycle, not a single training script. Every dataset, model,
+and evaluation stage feeds the same production question: **is this model good enough, fast enough,
+and fair enough to serve — and can that decision be defended?**
+
+## How The Architecture Solves It
+
+Domain-specific data mapping is isolated from model training, evaluation, and serving. Each raw
+dataset is converted into a shared `RankingExample` schema, so the same teacher, student, fairness,
+governance, and production code runs unmodified against ESCI, RecTour, synthetic, or MovieLens data.
+
+| Stage | Component | Purpose |
+|---|---|---|
+| 1 | Dataset adapter | Maps raw rows into `RankingExample` — domain logic stays out of the model layer |
+| 2 | Teacher | LightGBM LambdaMART ranker optimized purely for ranking quality |
+| 3 | Student | PyTorch two-tower model with precomputable item embeddings, built for serving |
+| 4 | Distillation | Transfers teacher ranking behavior into the smaller student (response, feature, or relation-based KD) |
+| 5 | Benchmark | Quantifies the quality/latency/size trade-off — NDCG@5/10, model size, p50/p99 latency |
+| 6 | Fairness layer | Sweeps exposure floors, plots relevance vs. exposure fairness for low-exposure supply groups |
+| 7 | Promotion gate | Logs a governed, executable promote/reject decision to SQLite |
 
 ## Architecture
 
 ![Architecture diagram](docs/architecture_diagram.png)
 
-The main flow is:
+For the full pictorial walkthrough — data adapters, teacher-student distillation, evaluation
+metrics, fairness trade-offs, and production lifecycle — see
+[`docs/learning_flow.html`](docs/learning_flow.html).
 
-1. Dataset adapter maps raw rows into `RankingExample`.
-2. Teacher trains a LightGBM LambdaMART ranker.
-3. Student trains a PyTorch two-tower model, either with response-based KD or label-only no-KD.
-4. Benchmark compares quality, latency, and size.
-5. Fairness layer sweeps exposure floors and plots relevance vs. exposure fairness.
-6. Promotion gate logs governed decisions to SQLite.
+## Who This Is For
 
-## Install
+| Audience | Why it matters |
+|---|---|
+| **Search / marketplace ranking teams** | A reference lifecycle for taking a ranking model from offline training to a governed, servable decision |
+| **ML platform engineers** | A worked example of promotion-as-policy: executable gates instead of ad hoc release judgment |
+| **Applied scientists evaluating KD strategies** | A head-to-head ablation of response-, feature-, and relation-based distillation on the same harness |
+
+---
+
+## Quickstart
 
 ```bash
+make install
+# or directly:
 pip install -e ".[dev]"
+
 # Optional dashboard:
 pip install -e ".[dev,dashboard]"
 ```
 
-## Run
-
 ```bash
-pytest tests/ -v
-ruff check .
-ruff format --check .
-python -m learning_to_rank_distillation.benchmark.run_all
-python -m learning_to_rank_distillation.benchmark.promotion_check \
-  --benchmark-table artifacts/benchmark_table.json \
-  --max-ndcg-drop 0.50 \
-  --min-latency-improvement 0.25
+make lint
+make test
+make benchmark
+make ablation
+make cross-dataset
+make promotion-check
 ```
-
-The CLI alias is also available after installation:
 
 ```bash
 ltrd benchmark
@@ -62,54 +93,62 @@ ltrd distillation-ablation
 ltrd train-teacher --dataset synthetic
 ltrd train-teacher --dataset esci --data-dir data/esci --limit 5000
 ltrd generate-synthetic-rectour --output-path data/synthetic/rectour_like.csv
-make cross-dataset
 make dashboard
+make benchmark-esci
+```
+
+Serving requires a previously built student bundle at `artifacts/bundles/current`. No bundle is
+committed to the repo.
+
+```bash
+make serve
 ltrd-serve --bundle-path artifacts/bundles/current
 docker compose up --build
 ```
 
-## Benchmark Table
+---
 
-Example local run on the enriched synthetic fallback fixture:
+## Benchmark Results
 
-| model | NDCG@5 | NDCG@10 | size bytes | p50 ms | p99 ms |
+Local run on the enriched synthetic fallback fixture:
+
+| Model | NDCG@5 | NDCG@10 | Size (bytes) | p50 (ms) | p99 (ms) |
 |---|---:|---:|---:|---:|---:|
-| teacher-lightgbm | 0.3763 | 0.5237 | 111705 | 1.321 | 1.642 |
-| student-no-kd-d16 | 0.4181 | 0.5543 | 36096 | 1.178 | 1.480 |
-| student-kd-d8 | 0.4121 | 0.5482 | 33984 | 1.174 | 1.461 |
-| student-kd-d16 | 0.4121 | 0.5482 | 36096 | 1.182 | 1.376 |
-| student-kd-d32 | 0.4121 | 0.5515 | 40320 | 1.219 | 1.387 |
+| teacher-lightgbm | 0.3763 | 0.5237 | 111,705 | 1.321 | 1.642 |
+| student-no-kd-d16 | 0.4181 | 0.5543 | 36,096 | 1.178 | 1.480 |
+| student-kd-d8 | 0.4121 | 0.5482 | 33,984 | 1.174 | 1.461 |
+| student-kd-d16 | 0.4121 | 0.5482 | 36,096 | 1.182 | 1.376 |
+| student-kd-d32 | 0.4121 | 0.5515 | 40,320 | 1.219 | 1.387 |
 
 ## Distillation Ablation
 
-Example local run on the synthetic fallback fixture with the transformer teacher:
+Local run on the synthetic fallback fixture with the transformer teacher:
 
-| model | NDCG@5 | NDCG@10 | final loss |
+| Model | NDCG@5 | NDCG@10 | Final loss |
 |---|---:|---:|---:|
-| teacher-transformer | 0.4004 | 0.5234 | - |
+| teacher-transformer | 0.4004 | 0.5234 | — |
 | student-no-kd-d16 | 0.2685 | 0.4628 | 1.7857 |
 | student-response-kd-d16 | 0.2921 | 0.4863 | 0.5361 |
 | student-feature-kd-d16 | 0.3534 | 0.4764 | 0.9500 |
 | student-relation-kd-d16 | 0.4038 | 0.5981 | 0.7192 |
 
-On this synthetic fixture, relation-based KD is the strongest student by NDCG because preserving
-teacher pairwise/listwise ordering helps more than matching softened scores alone. Feature-based KD
-also improves over the no-KD control, while response-based KD mainly lowers training loss. Treat
-these as smoke-test results, not real-data claims.
+**Reading the result:** on this fixture, relation-based KD wins on NDCG because preserving the
+teacher's pairwise/listwise ordering matters more than matching softened scores alone. Feature-based
+KD also beats the no-KD control; response-based KD mainly reduces training loss without a matching
+NDCG gain. These are smoke-test results on synthetic data, not claims about real-data performance.
 
-Generated artifacts:
+Tracked example artifacts: `artifacts/benchmark_table.json`,
+`artifacts/cross_dataset/cross_dataset_benchmark.json`, `artifacts/distillation_ablation.json`,
+`artifacts/quality_latency_pareto.png`, `artifacts/fairness_tradeoff.json`,
+`artifacts/fairness_tradeoff.png`, `artifacts/fairness_pareto_frontier.json`,
+`artifacts/fairness_pareto_frontier.png`.
 
-- `artifacts/benchmark_table.json`
-- `artifacts/cross_dataset/cross_dataset_benchmark.json`
-- `artifacts/distillation_ablation.json`
-- `artifacts/quality_latency_pareto.png`
-- `artifacts/fairness_tradeoff.json`
-- `artifacts/fairness_tradeoff.png`
-- `artifacts/fairness_pareto_frontier.json`
-- `artifacts/fairness_pareto_frontier.png`
-- `artifacts/promotion_registry.sqlite`
+Real Amazon ESCI benchmark artifacts can be generated under `artifacts/esci/` with
+`make benchmark-esci`. The committed top-level artifacts remain the deterministic synthetic smoke
+examples unless explicitly regenerated. See [`docs/artifact_policy.md`](docs/artifact_policy.md) for
+the full committed-vs-ignored policy.
 
-See [`docs/artifact_policy.md`](docs/artifact_policy.md) for what is committed versus ignored.
+---
 
 ## Data
 
@@ -121,82 +160,67 @@ Amazon ESCI is the primary public-data path. Place the official shopping query f
 - `shopping_queries_dataset_sources.csv` or `.parquet` (optional)
 
 This repo commits the official examples parquet and sources CSV downloaded from Amazon Science on
-July 10, 2026. The products parquet is not committed because it is about 1.03 GB and requires Git
-LFS. The ESCI adapter still runs without it by using query fields, sources, locale, and a stable
-product-id hash bucket; product metadata is merged automatically when the products file is present.
+July 10, 2026. The products parquet (~1.03 GB, requires Git LFS) is not committed; the ESCI adapter
+still runs without it using query fields, sources, locale, and a stable product-id hash bucket, and
+merges product metadata automatically when the file is present. The adapter maps `E/S/C/I` judgments
+to graded relevance `3/2/1/0` and derives conservative text-overlap features.
 
-The ESCI adapter maps `E/S/C/I` judgments to graded relevance `3/2/1/0`, merges product metadata
-when available, derives conservative text-overlap features, and exposes the result through
-`RankingExample`.
+Real RecTour files go under `data/rectour/`. The adapter validates real files before mapping rows and
+raises a clear error on missing or ambiguous schema instead of guessing Expedia field names. The
+synthetic fallback is **RecTour-like, not RecTour-derived** — generated from public schema/behavior
+descriptions and borrowed feature-family ideas from the 2013 ICDM Expedia hotel-search challenge. Use
+it to exercise the pipeline and inspect expected shapes, not to report Expedia benchmark claims.
+`SyntheticMarketplaceConfig` can vary supply concentration, cold-start rate, and logged exposure skew
+for stress testing.
 
-Real RecTour files should be placed under `data/rectour/`. The adapter validates actual files before
-mapping rows into `RankingExample`. If the schema is missing or ambiguous, it raises a clear error
-instead of guessing Expedia field names.
+MovieLens is available as a third adapter under `data/movielens/` (`ratings.csv`, optional
+`movies.csv`), mapping users to ranking queries, movies to items, ratings to graded labels, and
+genre/year to features.
 
-MovieLens is available as a third adapter under `data/movielens/`; place `ratings.csv` and optional
-`movies.csv` there. It maps each user to a ranking query, each movie to an item, ratings to graded
-labels, and genre/year metadata to features.
-
-When real data is unavailable, the package uses deterministic synthetic ranking data so the models,
-benchmark, fairness layer, and governance gate can still be developed and tested.
-
-The synthetic fallback is RecTour-like rather than RecTour-derived. It is generated from public
-schema/behavior descriptions: search-level features such as check-in/check-out dates, destination,
-party size, point of sale, mobile flag, sort/filter settings; property-level features such as
-`prop_id`, ratings, review count, price bucket, cancellation, ad and amenity flags; and behavioral
-columns such as `num_clicks`, `is_trans`, `label`, `is_unbiased`, and observed `position`.
-Use it to exercise the pipeline and inspect expected shapes, not to report Expedia benchmark claims.
-It also borrows feature-family ideas from the 2013 ICDM Expedia hotel-search challenge: visitor
-history, explicit price and historical price, property location scores, promotion flags, competitor
-price/availability signals, and within-query rank features such as price/star/location rank.
-For stress tests, `SyntheticMarketplaceConfig` can vary supply concentration, cold-start rate, and
-logged exposure skew.
+Use `synthetic` when real data is unavailable. Real-data adapters fail fast on missing or ambiguous
+files; the synthetic path keeps models, benchmark, fairness, and governance testable without external
+data access.
 
 ## Production Shape
 
-The `production/` package adds the deployable skeleton:
+The `production/` package provides the deployable skeleton:
 
-- Student bundle save/load with model weights, vectorizer, item embeddings, metrics, config, and data
-  hash.
-- Versioned bundle/index lifecycle with validation and a `CURRENT` publish pointer.
-- FastAPI serving endpoint (`/health`, `/rank`, `/metrics`) backed by precomputed item embeddings.
-- Prometheus metrics for request count, errors, empty results, latency, and loaded item count.
-- JSONL experiment tracking with optional MLflow logging when `LTRD_TRACKING_BACKEND=mlflow`.
-- Filesystem model registry for bundle versions and promotion stages.
-- Dockerfile, docker-compose service, and `loadtest/k6-ranking.js`.
+| Capability | Implementation |
+|---|---|
+| Bundle packaging | Model weights, vectorizer, item embeddings, metrics, config, and data hash |
+| Bundle lifecycle | Versioned bundle/index lifecycle with validation and a `CURRENT` publish pointer |
+| Serving API | FastAPI endpoint (`/health`, `/rank`, `/metrics`) backed by precomputed item embeddings |
+| Metrics | Prometheus counters for request count, errors, empty results, latency, loaded item count |
+| Experiment tracking | JSONL tracking with optional MLflow logging (`LTRD_TRACKING_BACKEND=mlflow`) |
+| Registry | Filesystem model registry for bundle versions and promotion stages |
+| Deployment | Dockerfile, docker-compose service, `loadtest/k6-ranking.js` |
+
+No default serving bundle is committed. Build one with the `production.bundle` or
+`production.index_lifecycle` APIs before running `make serve`, `ltrd-serve`, or Docker Compose.
 
 ## Design Decisions
 
-- Ranking distillation: response-based KD remains the simple primary control; feature-based and
-  relation-based KD are available through the transformer-teacher ablation path.
-- Latency-aware student: the student is a two-tower PyTorch model with precomputable item embeddings
-  and a FAISS-backed item index wrapper.
-- Marketplace ranking: exposure fairness is treated as a supply-side proxy, measured by top-k
-  impression share for historically low-exposure groups plus exposure Gini.
-- Multi-objective search: the benchmark now writes both a constrained exposure-floor sweep and a
-  scalarized relevance/fairness Pareto search. The latter marks non-dominated operating points.
-- Offline evaluation: `evaluation.ips` provides clipped inverse-propensity NDCG for logged ranking
-  rows with observed positions, so position-biased logs can be evaluated separately from standard
-  NDCG.
-- Governance discipline: promotion is executable policy, not prose. The default gate promotes only if
-  NDCG@5 drop is at most 2% and p99 latency improves by at least 3x versus teacher.
-- CI enforcement: GitHub Actions runs lint, tests, a benchmark smoke run, and a promotion-gate smoke
-  check. The local command defaults stay strict; CI uses looser smoke thresholds to avoid runner
-  latency noise.
-- Dataset generality: ESCI and RecTour-specific mapping is isolated to `adapters/`; model,
-  distillation, fairness, benchmark, and governance code use only `RankingExample`.
+| Decision | Rationale |
+|---|---|
+| Response-based KD as the primary control | Simple, stable baseline; feature- and relation-based KD available via the transformer-teacher ablation path |
+| Two-tower student architecture | Precomputable item embeddings plus a FAISS-backed item index wrapper keep serving latency low |
+| Exposure fairness as a supply-side proxy | Measured via top-k impression share for historically low-exposure groups plus exposure Gini |
+| Multi-objective search | Benchmark writes both a constrained exposure-floor sweep and a scalarized relevance/fairness Pareto search, marking non-dominated operating points |
+| IPS evaluation | `evaluation.ips` provides clipped inverse-propensity NDCG for logged rows with observed positions, isolating position bias from standard NDCG |
+| Governance as executable policy | Default gate promotes only if NDCG@5 drop ≤ 2% and p99 latency improves ≥ 3x versus teacher |
+| CI enforcement | GitHub Actions runs lint, tests, a benchmark smoke run, and a promotion-gate smoke check; local defaults stay strict, CI uses looser smoke thresholds to absorb runner latency noise |
+| Dataset generality | ESCI/RecTour-specific mapping is isolated to `adapters/`; model, distillation, fairness, benchmark, and governance code depend only on `RankingExample` |
 
 ## What This Does Not Cover
 
 - No online A/B test or live traffic evaluation.
-- No actual partner revenue, commission, or negotiated exposure modeling. The fairness metric is only
-  a proxy for supply-side exposure.
+- No actual partner revenue, commission, or negotiated exposure modeling — the fairness metric is a
+  supply-side proxy only.
 - No hosted production deployment or online traffic integration. The FastAPI endpoint is a local
   serving skeleton around saved bundles.
 - No confirmed RecTour benchmark claims until real dataset access, version, schema, and any
   subsampling are documented here.
-- Synthetic RecTour-like rows are hand-generated from public descriptions and do not reproduce
-  Expedia's real traffic, supply, competition, pricing, or user-behavior distributions.
-- The bundle constructs a FAISS index when possible. Native FAISS search is opt-in with
-  `LTRD_USE_FAISS_SEARCH=1`; the default in-process path uses stable NumPy inner-product search
-  because FAISS/Torch OpenMP conflicts can abort this macOS environment.
+- Synthetic RecTour-like rows do not reproduce Expedia's real traffic, supply, competition, pricing,
+  or user-behavior distributions.
+- FAISS search is opt-in (`LTRD_USE_FAISS_SEARCH=1`); the default in-process path uses stable NumPy
+  inner-product search because FAISS/Torch OpenMP conflicts can abort this macOS environment.
