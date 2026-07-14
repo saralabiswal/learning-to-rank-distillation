@@ -1,8 +1,8 @@
-# learning-to-rank-distillation
+# agentic-ranking-distillation
 
 Author: Sarala Biswal
 
-[![CI](https://github.com/saralabiswal/learning-to-rank-distillation/actions/workflows/ci.yml/badge.svg)](https://github.com/saralabiswal/learning-to-rank-distillation/actions/workflows/ci.yml)
+[![CI](https://github.com/saralabiswal/agentic-ranking-distillation/actions/workflows/ci.yml/badge.svg)](https://github.com/saralabiswal/agentic-ranking-distillation/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![Status](https://img.shields.io/badge/status-production--shaped-1a3a2a)

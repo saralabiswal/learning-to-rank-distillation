@@ -41,7 +41,7 @@ def create_app(
 ) -> FastAPI:
     """Create a FastAPI app around a loaded student bundle."""
 
-    app = FastAPI(title="learning-to-rank-distillation serving")
+    app = FastAPI(title="agentic-ranking-distillation serving")
     registry = CollectorRegistry()
     metrics = _ServingMetrics(registry)
     loaded_bundle = bundle or _load_bundle_from_path(bundle_path)

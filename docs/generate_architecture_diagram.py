@@ -59,7 +59,7 @@ def main() -> None:
 def _title(draw: ImageDraw.ImageDraw) -> None:
     draw.text(
         (90, 78),
-        "learning-to-rank-distillation architecture",
+        "agentic-ranking-distillation architecture",
         fill=COLORS["ink"],
         font=_font(44, True),
     )

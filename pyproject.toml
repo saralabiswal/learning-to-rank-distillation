@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "learning-to-rank-distillation"
+name = "agentic-ranking-distillation"
 version = "0.1.0"
 description = "Dataset-agnostic toolkit for ranking-model distillation and marketplace-aware reranking."
 readme = "README.md"
@@ -45,7 +45,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 
 [tool.ruff]
 line-length = 100
